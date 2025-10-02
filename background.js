@@ -423,5 +423,4 @@ chrome.action.onClicked.addListener((tab) => {
       }
     }
   });
-});/ /   ÂÈ 
- 
+});
