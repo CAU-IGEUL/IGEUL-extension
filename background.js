@@ -34,6 +34,12 @@ chrome.action.onClicked.addListener((tab) => {
         newToolbar.id = 'custom-toolbar';
         newToolbar.innerHTML = `
           <div class="toolbar-content">
+            <!-- 오른쪽 버튼 -->
+            <div class="right-btns">
+              <button id="extract-btn" class="action-btn">📄 본문 추출</button>
+              <button id="reader-btn" class="action-btn">🕮 집중모드</button>
+            </div>
+
             <button id="edit-icon" title="편집">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -132,6 +138,29 @@ chrome.action.onClicked.addListener((tab) => {
             max-width: 1200px;
             margin: 0 auto;
             padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .right-btns {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+          }
+
+          .action-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+          }
+
+          .action-btn:hover {
+            background: #f3f4f6;
           }
 
           #edit-icon {
@@ -149,126 +178,6 @@ chrome.action.onClicked.addListener((tab) => {
             background: #f3f4f6;
           }
 
-          #settings-panel {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f9fafb;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-          }
-
-          .setting-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 12px;
-          }
-
-          .setting-item:last-child {
-            margin-bottom: 0;
-          }
-
-          .setting-label {
-            font-size: 14px;
-            color: #374151;
-            font-weight: 500;
-            min-width: 100px;
-          }
-
-          #size-slider, #lineheight-slider, #letterspacing-slider, #width-slider {
-            flex: 1;
-            height: 6px;
-            background: #e5e7eb;
-            border-radius: 3px;
-            outline: none;
-            -webkit-appearance: none;
-          }
-
-          #size-slider::-webkit-slider-thumb,
-          #lineheight-slider::-webkit-slider-thumb,
-          #letterspacing-slider::-webkit-slider-thumb,
-          #width-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #3b82f6;
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-
-          #size-slider::-moz-range-thumb,
-          #lineheight-slider::-moz-range-thumb,
-          #letterspacing-slider::-moz-range-thumb,
-          #width-slider::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: #3b82f6;
-            cursor: pointer;
-            border-radius: 50%;
-            border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-
-          #size-value, #lineheight-value, #letterspacing-value, #width-value {
-            font-size: 14px;
-            color: #374151;
-            font-weight: 600;
-            min-width: 50px;
-          }
-
-          .align-buttons {
-            display: flex;
-            gap: 8px;
-          }
-
-          .align-btn {
-            background: white;
-            border: 1px solid #d1d5db;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-          }
-
-          .align-btn:hover {
-            background: #f3f4f6;
-          }
-
-          .align-btn.active {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: white;
-          }
-
-          .align-btn.active svg {
-            stroke: white;
-          }
-          
-          .font-dropdown {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            background: white;
-            font-size: 14px;
-            cursor: pointer;
-            outline: none;
-          }
-          
-          .font-dropdown:hover {
-            border-color: #3b82f6;
-          }
-          
-          .font-dropdown:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-          }
-
           body {
             padding-top: 70px !important;
           }
@@ -276,151 +185,26 @@ chrome.action.onClicked.addListener((tab) => {
 
         document.head.appendChild(style);
         document.body.insertBefore(newToolbar, document.body.firstChild);
-        
-        //웹폰트 로드 추가
-        const fontLinks = [
-          'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Lexend:wght@400;600&display=swap',
-          'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css',
-        ];
-        
-        fontLinks.forEach(href => {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = href;
-          document.head.appendChild(link);
+
+        // 기존 버튼 이벤트 유지
+        document.getElementById("extract-btn").addEventListener("click", () => {
+          window.postMessage({ type: "CAU_EXTRACT_START" }, "*");
         });
 
-
-        // 폰트 크기 조절용 스타일 엘리먼트 생성
-        const fontStyleElement = document.createElement('style');
-        fontStyleElement.id = 'custom-font-style';
-        document.head.appendChild(fontStyleElement);
-
-                
-        // 폰트 설정 함수
-        function getFontFamily(fontKey) {
-          const fontMap = {
-            'default': '"Noto Sans KR"',
-            'lexend': 'Lexend',
-            'pretendard': 'Pretendard',
-            'comic': '"Comic Sans MS"',
-            'malgun': '"Malgun Gothic"',
-          };
-          return fontMap[fontKey] || fontMap['default'];
-        }
-
-
-        function updateStyles() {
-          const baseFontSize = 16 * (currentSize / 100);
-          const selectedFont = getFontFamily(currentFont);
-
-          fontStyleElement.textContent = `
-            
-            body {
-              background: #f5f5f5 !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-            
-            /* 본문 컨테이너 */
-            article, main, .content, #content {
-              width: ${currentWidth}% !important;
-              max-width: 720px !important;
-              margin: 0 auto !important;
-              padding: 60px 40px !important;
-              background: white !important;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-            }
-            
-            /* 텍스트 기본값 */
-            * {
-              font-family: ${selectedFont} !important;
-              font-size: ${baseFontSize}px !important;
-              line-height: ${currentLineHeight} !important;
-              letter-spacing: ${currentLetterSpacing}px !important;
-              text-align: ${currentAlign} !important;
-              color: #222 !important;
-            }
-            
-            /* 제목 크기 */
-            h1 { font-size: ${baseFontSize * 1.75}px !important; margin: 1.5em 0 0.5em !important; }
-            h2 { font-size: ${baseFontSize * 1.5}px !important; margin: 1.3em 0 0.5em !important; }
-            h3 { font-size: ${baseFontSize * 1.25}px !important; margin: 1.2em 0 0.5em !important; }
-            
-            p { margin-bottom: 1em !important; }
-            
-            /* 툴바 제외 */
-            #custom-toolbar, #custom-toolbar * {
-              font-family: -apple-system, sans-serif !important;
-              font-size: 14px !important;
-              line-height: 1.5 !important;
-              letter-spacing: 0 !important;
-              text-align: left !important;
-              color: #374151 !important;
-            }
-          `;
-        }
-
-
-        // 편집 아이콘 클릭 시 패널 토글
-        document.getElementById('edit-icon').addEventListener('click', () => {
-          const panel = document.getElementById('settings-panel');
-          if (panel.style.display === 'none') {
-            panel.style.display = 'block';
-            document.body.style.paddingTop = '270px';
-          } else {
-            panel.style.display = 'none';
-            document.body.style.paddingTop = '70px';
+        document.getElementById("reader-btn").addEventListener("click", () => {
+          const dtoRaw = localStorage.getItem("CAU_READER_DTO");
+          if (!dtoRaw) {
+            alert("먼저 본문을 추출하세요 📄");
+            return;
           }
-        });
-
-        // Text Size 슬라이더 조절
-        document.getElementById('size-slider').addEventListener('input', (e) => {
-          currentSize = e.target.value;
-          updateStyles();
-          document.getElementById('size-value').textContent = currentSize + '%';
-        });
-
-        // Line Height 슬라이더 조절
-        document.getElementById('lineheight-slider').addEventListener('input', (e) => {
-          currentLineHeight = e.target.value;
-          updateStyles();
-          document.getElementById('lineheight-value').textContent = currentLineHeight;
-        });
-
-        // Letter Spacing 슬라이더 조절
-        document.getElementById('letterspacing-slider').addEventListener('input', (e) => {
-          currentLetterSpacing = e.target.value;
-          updateStyles();
-          document.getElementById('letterspacing-value').textContent = currentLetterSpacing + 'px';
-        });
-
-        // Width 슬라이더 조절
-        document.getElementById('width-slider').addEventListener('input', (e) => {
-          currentWidth = e.target.value;
-          updateStyles();
-          document.getElementById('width-value').textContent = currentWidth + '%';
-        });
-
-        // 폰트 선택 변경
-        document.getElementById('font-select').addEventListener('change', (e) => {
-          currentFont = e.target.value;
-          updateStyles();
-        });
-
-        // Text Align 버튼 클릭
-        document.querySelectorAll('.align-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            // 모든 버튼에서 active 클래스 제거
-            document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
-            // 클릭한 버튼에 active 클래스 추가
-            btn.classList.add('active');
-            // 정렬 값 업데이트
-            currentAlign = btn.getAttribute('data-align');
-            updateStyles();
-          });
+          const dto = JSON.parse(dtoRaw);
+          window.postMessage({ type: "CAU_READER_MODE_START", dto }, "*");
         });
       }
     }
   });
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("Reader Mode Extractor installed.");
 });
