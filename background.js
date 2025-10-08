@@ -34,12 +34,22 @@ chrome.action.onClicked.addListener((tab) => {
         newToolbar.id = 'custom-toolbar';
         newToolbar.innerHTML = `
           <div class="toolbar-content">
+            <div class="toolbar-buttons">
             <button id="edit-icon" title="편집">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
             </button>
+
+            <button id="reading-guide-toggle" title="읽기 가이드">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6" opacity="0.3"></line>
+                  <line x1="3" y1="18" x2="21" y2="18" opacity="0.3"></line>
+                </svg>
+              </button>
+            </div>
             
             <div id="settings-panel" style="display: none;">
 
@@ -112,7 +122,43 @@ chrome.action.onClicked.addListener((tab) => {
                 </div>
               </div>
             </div>
-          </div>
+
+              <div id="guide-panel" style="display: none;">
+                <div class="guide-setting-item">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="display-ruler-checkbox">
+                    <span class="checkbox-label">Display Ruler</span>
+                  </label>
+                </div>
+                
+                <div class="guide-setting-item">
+                  <span class="guide-label">Color</span>
+                  <input type="color" id="guide-color-picker" value="#60616aff">
+                </div>
+
+                <div class="guide-setting-item">
+                  <span class="guide-label">Height</span>
+                  <input type="range" id="guide-height-slider" min="20" max="200" value="60" step="10">
+                  <span id="guide-height-value">60px</span>
+                </div>
+                
+                <div class="guide-setting-item">
+                  <span class="guide-label">Opacity</span>
+                  <input type="range" id="guide-opacity-slider" min="0" max="100" value="20" step="5">
+                  <span id="guide-opacity-value">20%</span>
+                </div>
+
+                <div class="guide-setting-item">
+                  <span class="guide-label">Position</span>
+                  <input type="range" id="guide-position-slider" min="100" max="800" value="500" step="10">
+                  <span id="guide-position-value">500px</span>
+                </div>
+
+                <div class="guide-hint">
+                  Ctrl + 마우스휠로 위치 조정 가능합니다
+                </div>
+              </div>
+            </div>
         `;
 
         const style = document.createElement('style');
@@ -134,7 +180,12 @@ chrome.action.onClicked.addListener((tab) => {
             padding: 10px 20px;
           }
 
-          #edit-icon {
+          .toolbar-buttons {
+            display: flex;
+            gap: 10px;
+          }
+
+          #edit-icon, #reading-guide-toggle {
             background: white;
             border: 1px solid #d1d5db;
             padding: 8px 12px;
@@ -145,7 +196,7 @@ chrome.action.onClicked.addListener((tab) => {
             transition: all 0.2s;
           }
 
-          #edit-icon:hover {
+          #edit-icon:hover, #reading-guide-toggle:hover {
             background: #f3f4f6;
           }
 
@@ -272,10 +323,186 @@ chrome.action.onClicked.addListener((tab) => {
           body {
             padding-top: 70px !important;
           }
+
+           /* 읽기 가이드 패널 */
+          #guide-panel {
+            margin-top: 15px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+          }
+
+          .guide-setting-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+          }
+
+          .guide-setting-item:last-child {
+            margin-bottom: 0;
+          }
+
+          .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+          }
+
+          .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+          }
+
+          .checkbox-label {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 500;
+          }
+
+          .guide-label {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 500;
+            min-width: 100px;
+          }
+
+          #guide-color-picker {
+            flex: 1;
+            height: 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+          }
+
+          #guide-color-picker::-webkit-color-swatch-wrapper {
+            padding: 4px;
+          }
+
+          #guide-color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+          }
+
+          #guide-opacity-slider {
+            flex: 1;
+            height: 6px;
+            background: linear-gradient(to right, transparent, currentColor);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            margin-bottom: 10px;
+          }
+
+          #guide-opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #111827;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+
+          #guide-opacity-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #111827;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+
+          #guide-opacity-value {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 600;
+            min-width: 50px;
+          }
+
+          #reading-guide-toggle.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+          }
+
+          #reading-guide-toggle.active svg {
+            stroke: white;
+          }
+
+          #guide-height-slider, #guide-position-slider {
+            flex: 1;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            margin-bottom: 10px;
+          }
+
+          #guide-height-slider::-webkit-slider-thumb,
+          #guide-position-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #111827;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+
+          #guide-height-slider::-moz-range-thumb,
+          #guide-position-slider::-moz-range-thumb{
+            width: 18px;
+            height: 18px;
+            background: #111827;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+
+          #guide-height-value, #guide-position-value {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 600;
+            min-width: 50px;
+          }
+
+          .guide-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: -8px;
+            margin-bottom: 12px;
+            padding-left: 115px;
+            font-style: italic;
+          }
+
+          /* 리딩 가이드 막대 */
+          #reading-guide {
+            position: fixed;
+            left: 0;
+            right: 0;
+            height: 60px;
+            cursor: grab;
+            z-index: 999998;
+            transition: top 0.1s ease-out;
+          }
         `;
 
         document.head.appendChild(style);
         document.body.insertBefore(newToolbar, document.body.firstChild);
+
+        const readingGuide = document.createElement('div');
+        readingGuide.id = 'reading-guide';
+        readingGuide.style.display = 'none';
+        document.body.appendChild(readingGuide);
+
         
         //웹폰트 로드 추가
         const fontLinks = [
@@ -431,6 +658,159 @@ chrome.action.onClicked.addListener((tab) => {
             updateStyles();
           });
         });
+
+        // 리딩 가이드 변수
+        let readingGuideEnabled = false;
+        let readingGuidePosition = window.innerHeight / 2;
+        let guideColor = '#7a7d81ff'; 
+        let guideOpacity = 15;
+        let guideHeight = 60; 
+
+        // 리딩 가이드 스타일 업데이트 함수
+        function updateReadingGuideStyle() {
+          const guide = document.getElementById('reading-guide');
+          if (!guide) return;
+          
+          // hex 색상을 rgb로 변환
+          const r = parseInt(guideColor.slice(1, 3), 16);
+          const g = parseInt(guideColor.slice(3, 5), 16);
+          const b = parseInt(guideColor.slice(5, 7), 16);
+          
+          // 배경 색상 적용
+          guide.style.background = `rgba(${r}, ${g}, ${b}, ${guideOpacity / 100})`;
+
+          //높이 적용
+          guide.style.height = `${guideHeight}px`;
+        }
+
+        // 리딩 가이드 위치 업데이트
+        function updateReadingGuidePosition() {
+          if (!readingGuideEnabled) return;
+          
+          const guide = document.getElementById('reading-guide');
+          guide.style.top = readingGuidePosition + 'px';
+        }
+
+        // 리딩 가이드 토글 버튼
+        document.getElementById('reading-guide-toggle').addEventListener('click', () => {
+          const guidePanel = document.getElementById('guide-panel');
+          const settingsPanel = document.getElementById('settings-panel');
+          const toggleBtn = document.getElementById('reading-guide-toggle');
+          
+          if (guidePanel.style.display === 'none') {
+            guidePanel.style.display = 'block';
+            settingsPanel.style.display = 'none';  // 편집 패널 숨김
+            toggleBtn.classList.add('active');
+            document.body.style.paddingTop = '270px';
+          } else {
+            guidePanel.style.display = 'none';
+            toggleBtn.classList.remove('active');
+            document.body.style.paddingTop = '70px';
+          }
+        });
+
+        // 체크박스로 가이드 ON/OFF
+        document.getElementById('display-ruler-checkbox').addEventListener('change', (e) => {
+          const guide = document.getElementById('reading-guide');
+          readingGuideEnabled = e.target.checked;
+          
+          if (readingGuideEnabled) {
+            guide.style.display = 'block';
+
+            // 슬라이더 최대값을 화면 높이에서 가이드 높이를 뺀 값으로 설정
+            const maxPosition = window.innerHeight - guideHeight;
+            document.getElementById('guide-position-slider').max = maxPosition;
+
+            // 초기 위치를 현재 화면 중앙으로 설정
+            readingGuidePosition = window.innerHeight / 2;
+            document.getElementById('guide-position-slider').value = readingGuidePosition;
+            document.getElementById('guide-position-value').textContent = Math.round(readingGuidePosition) + 'px';
+            
+            updateReadingGuideStyle();
+            updateReadingGuidePosition();
+          } else {
+            guide.style.display = 'none';
+          }
+        });
+
+        // 색상 선택
+        document.getElementById('guide-color-picker').addEventListener('input', (e) => {
+          guideColor = e.target.value;
+          updateReadingGuideStyle();
+        });
+
+        // 투명도 조절
+        document.getElementById('guide-opacity-slider').addEventListener('input', (e) => {
+          guideOpacity = e.target.value;
+          document.getElementById('guide-opacity-value').textContent = guideOpacity + '%';
+          updateReadingGuideStyle();
+        });
+
+        // 높이 조절
+        document.getElementById('guide-height-slider').addEventListener('input', (e) => {
+          guideHeight = e.target.value;
+          document.getElementById('guide-height-value').textContent = guideHeight + 'px';
+
+           // 슬라이더 최대값 업데이트
+          if (readingGuideEnabled) {
+            const maxPosition = window.innerHeight - guideHeight;
+            document.getElementById('guide-position-slider').max = maxPosition;
+            
+            // 현재 위치가 최대값을 초과하면 조정
+            if (readingGuidePosition > maxPosition) {
+              readingGuidePosition = maxPosition;
+              document.getElementById('guide-position-slider').value = readingGuidePosition;
+              document.getElementById('guide-position-value').textContent = Math.round(readingGuidePosition) + 'px';
+              updateReadingGuidePosition();
+            }
+          }
+
+          updateReadingGuideStyle();
+        });
+
+        // 위치 조절 (추가)
+        document.getElementById('guide-position-slider').addEventListener('input', (e) => {
+          readingGuidePosition = parseInt(e.target.value);
+          document.getElementById('guide-position-value').textContent = readingGuidePosition + 'px';
+          updateReadingGuidePosition();
+        });
+
+        // 마우스 휠로 리딩 가이드 위치 조절
+        document.addEventListener('wheel', (e) => {
+          if (!readingGuideEnabled) return;
+          
+          if (e.ctrlKey) {
+            e.preventDefault();
+            readingGuidePosition += e.deltaY * 0.3;
+            
+            const minPos = 100;
+            const maxPos = window.innerHeight - guideHeight;
+            readingGuidePosition = Math.max(minPos, Math.min(maxPos, readingGuidePosition));
+            
+            // 슬라이더 값도 업데이트
+            document.getElementById('guide-position-slider').value = readingGuidePosition;
+            document.getElementById('guide-position-value').textContent = Math.round(readingGuidePosition) + 'px';
+            
+            updateReadingGuidePosition();
+          }
+        }, { passive: false });
+
+        // 창 크기 변경 시 위치 재조정
+        window.addEventListener('resize', () => {
+          if (readingGuideEnabled) {
+            const maxPosition = window.innerHeight - guideHeight;
+            document.getElementById('guide-position-slider').max = maxPosition;
+            
+            readingGuidePosition = Math.min(readingGuidePosition, maxPosition);
+            document.getElementById('guide-position-slider').value = readingGuidePosition;
+            document.getElementById('guide-position-value').textContent = Math.round(readingGuidePosition) + 'px';
+    
+            updateReadingGuidePosition();
+          }
+        });
+
+        // 초기 위치 설정
+        updateReadingGuidePosition();
       }
     }
   });
