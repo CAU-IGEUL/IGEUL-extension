@@ -49,8 +49,8 @@ chrome.action.onClicked.addListener((tab) => {
                 <option value="default">기본 (Noto Sans KR)</option>
                 <option value="lexend">Lexend (읽기 쉬움)</option>
                 <option value="pretendard">Pretendard (깔끔)</option>
-                <option value="comic">Comic Sans (어린이용)</option>
                 <option value="malgun">맑은 고딕</option>
+                <option value="peachmarket">PeachMarket (난독증 친화)</option>
               </select>
             </div>
             
@@ -282,6 +282,17 @@ chrome.action.onClicked.addListener((tab) => {
           'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Lexend:wght@400;600&display=swap',
           'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css',
         ];
+
+        const customFontStyle = document.createElement('style');
+        customFontStyle.textContent = `
+          @font-face {
+            font-family: 'PeachMarket';
+            src: url('${chrome.runtime.getURL('fonts/PeachMarket-Regular.ttf')}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+          }
+        `;
+          document.head.appendChild(customFontStyle);
         
         fontLinks.forEach(href => {
           const link = document.createElement('link');
@@ -303,8 +314,8 @@ chrome.action.onClicked.addListener((tab) => {
             'default': '"Noto Sans KR"',
             'lexend': 'Lexend',
             'pretendard': 'Pretendard',
-            'comic': '"Comic Sans MS"',
             'malgun': '"Malgun Gothic"',
+            'peachmarket': 'PeachMarket',
           };
           return fontMap[fontKey] || fontMap['default'];
         }

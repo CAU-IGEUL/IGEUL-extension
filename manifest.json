@@ -5,9 +5,15 @@
   "description": " ",
   "permissions": ["activeTab", "scripting"],
   "action": {
-    "default_title": "상단바 토글"
+    "default_title": "상단바"
   },
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/PeachMarket-Regular.ttf"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
