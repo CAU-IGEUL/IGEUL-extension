@@ -6,7 +6,8 @@ module.exports = {
   entry: {
     background: './src/background.js',
     content: './src/content.js',
-    toggleToolbar: './src/toggleToolbar.js'
+    toggleToolbar: './src/toggleToolbar.js',
+    popup: './popup.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -17,7 +18,9 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         { from: 'manifest.json', to: 'manifest.json' },
-        { from: 'fonts', to: 'fonts' }
+        { from: 'fonts', to: 'fonts' },
+        { from: 'popup.html', to: 'popup.html' },
+        { from: 'popup.css', to: 'popup.css' }
       ]
     })
   ]

@@ -3,9 +3,17 @@
   "name": "CAU IGEUL - 본문 추출 리더 모드",
   "description": "네이버 뉴스, 스포츠, 블로그, 나무위키 등에서 본문 텍스트를 추출하고 가독성 있는 리더모드로 표시합니다.",
   "version": "1.0.0",
-  "permissions": ["scripting", "activeTab", "storage"],
+  "permissions": ["scripting", "activeTab", "storage", "identity"],
+  "oauth2": {
+    "client_id": "119171161159-utk39q8k1g5n9id3id2c71u5fj124hvq.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
   "action": {
-    "default_title": "CAU IGEUL 실행"
+    "default_title": "CAU IGEUL 실행",
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
@@ -26,5 +34,8 @@
       ],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://*.firebaseio.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com;"
+  }
 }
