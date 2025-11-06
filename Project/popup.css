@@ -73,6 +73,15 @@ p {
   background-color: #357ae8;
 }
 
+.profile-btn {
+  background-color: #34a853; /* Green for profile */
+  color: white;
+}
+
+.profile-btn:hover {
+  background-color: #2d8e47;
+}
+
 .logout-btn {
   background-color: #dc3545; /* Red for logout */
   color: white;

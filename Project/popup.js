@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginBtn = document.getElementById('login-btn');
+  const profileBtn = document.getElementById('profile-btn');
   const logoutBtn = document.getElementById('logout-btn');
   const extractBtn = document.getElementById('extract-btn');
   const userInfoDiv = document.getElementById('user-info');
@@ -10,11 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const userEmail = document.getElementById('user-email');
   const statusMessage = document.getElementById('status-message');
 
+
   // Function to update UI based on auth status
   function updateUI(user) {
     if (user) {
       // Logged in
       loginBtn.style.display = 'none';
+      profileBtn.style.display = 'block';
       logoutBtn.style.display = 'block';
       userInfoDiv.style.display = 'flex'; // Use flex to align items
       statusMessage.textContent = '로그인되었습니다.';
@@ -25,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       // Logged out
       loginBtn.style.display = 'block';
+      profileBtn.style.display = 'none';
       logoutBtn.style.display = 'none';
       userInfoDiv.style.display = 'none';
       statusMessage.textContent = '로그인하여 더 많은 기능을 사용하세요.';
@@ -48,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Login button click
   loginBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'login' });
+  });
+
+  // Profile button click
+  profileBtn.addEventListener('click', () => {
+    // 프로필 선택 페이지로 이동
+    window.location.href = 'profile.html';
   });
 
   // Logout button click
