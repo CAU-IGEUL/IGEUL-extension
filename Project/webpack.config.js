@@ -6,9 +6,9 @@ module.exports = {
   entry: {
     background: './src/background.js',
     content: './src/content.js',
+    profileOverlay: './profileOverlay.js',
     toggleToolbar: './src/toggleToolbar.js',
-    popup: './popup.js',
-    profile: './profile.js'
+    popup: './popup.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -21,9 +21,7 @@ module.exports = {
         { from: 'manifest.json', to: 'manifest.json' },
         { from: 'fonts', to: 'fonts' },
         { from: 'popup.html', to: 'popup.html' },
-        { from: 'popup.css', to: 'popup.css' },
-        { from: 'profile.html', to: 'profile.html' },
-        { from: 'profile.css', to: 'profile.css' }
+        { from: 'popup.css', to: 'popup.css' }
       ]
     })
   ]
