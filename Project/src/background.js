@@ -44,6 +44,24 @@ function handleGoogleLogin() {
       .then((result) => {
         const user = result.user;
         console.log('Login Successful (via credential):', user.displayName, user.email);
+        user.getIdToken().then((idToken) => {
+          console.log('Firebase ID Token:', idToken);
+
+          chrome.storage.local.set({ idToken });
+
+          fetch('https://us-central1-igeul-66a16.cloudfunctions.net/getUserProfile', {
+            headers: {
+              'Authorization': 'Bearer ' + idToken
+            }
+          })
+          .then(response => response.text())
+          .then(data => {
+            showResponseInPopup(data);
+          })
+          .catch(error => {
+            console.error('Error fetching user profile:', error);
+          });
+        });
       })
       .catch((error) => {
         console.error('Firebase signInWithCredential error:', error);

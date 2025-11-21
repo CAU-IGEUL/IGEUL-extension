@@ -4,9 +4,39 @@ import { loadFonts, initFontController } from './changeTextStyle.js';
 import { initReadingGuide } from './readingGuide.js';
 import { getToolbarHTML } from '../styles/toolbarHTML.js';
 import { applyToolbarStyles } from '../styles/toolbarCSS.js';
+import { requestSimplifyText, getSimplificationReport } from "./api.js";
 
 export function renderReaderMode(dto) {
+
+  function showSimplifyLoading() {
+    let loader = document.getElementById("simplify-loading");
+    if (!loader) {
+      loader = document.createElement("div");
+      loader.id = "simplify-loading";
+      loader.innerHTML = `
+        <div class="loading-backdrop"></div>
+        <div class="loading-box">
+          <div class="loader"></div>
+          <p>문장 순화 중입니다...</p>
+        </div>
+      `;
+      document.body.appendChild(loader);
+    }
+    loader.style.display = "flex";
+  }
+
+  function hideSimplifyLoading() {
+    const loader = document.getElementById("simplify-loading");
+    if (loader) loader.style.display = "none";
+  }
+
   document.body.innerHTML = "";
+
+  // 🔹 문장 순화/리포트용 상태
+  let originalParagraphs = [];
+  let simplifiedParagraphs = [];
+  let lastJobId = null;
+  let currentMode = "original";
 
   loadFonts();
   const style = applyToolbarStyles();
@@ -42,6 +72,7 @@ export function renderReaderMode(dto) {
     <div class="center-section">
       <label><input type="radio" name="view-mode" id="simplified-only" checked> 순화된 문장만 보기</label>
       <label><input type="radio" name="view-mode" id="compare-view"> 원문 같이 보기</label>
+      <label><input type="radio" name="view-mode" id="origin-only"> 원문만 보기</label>
     </div>
 
     <div class="right-section">
@@ -56,15 +87,110 @@ export function renderReaderMode(dto) {
     simplifyPanel.classList.toggle("show");
   });
 
-  document.getElementById("run-simplify")?.addEventListener("click", () => {
-    console.log(" 문장 순화 요청됨 (run-simplify clicked)");
+  // ✅ 보기 모드 라디오 버튼 이벤트
+  const originRadio = document.getElementById("origin-only");
+  const simplifiedRadio = document.getElementById("simplified-only");
+  const compareRadio = document.getElementById("compare-view");
+
+  // 원문만 보기
+  originRadio?.addEventListener("change", () => {
+    currentMode = "original";
+    renderParagraphs();
   });
 
-  document.getElementById("report-view")?.addEventListener("click", () => {
-    console.log("📊 리포트 요청됨 (report-view clicked)");
+  simplifiedRadio?.addEventListener("change", () => {
+    currentMode = "simplified";
+    renderParagraphs();
   });
 
+  compareRadio?.addEventListener("change", () => {
+    currentMode = "compare";
+    renderParagraphs();
+  });
 
+  // 🪄 문장 순화 실행 버튼
+  document.getElementById("run-simplify")?.addEventListener("click", async () => {
+    console.log("🪄 문장 순화 요청됨");
+    chrome.storage.local.get(null, res => console.log("🔥 local storage:", res));
+
+
+    showSimplifyLoading();
+
+    try {
+      // 1) Firebase idToken 가져오기
+      const { idToken } = await chrome.storage.local.get("idToken");
+
+      // 2) 본문 원문 다시 읽어오기 (안전용)
+      const content = document.querySelectorAll(".focus-content p");
+      originalParagraphs = [...content].map(p => p.innerText);
+
+      // 3) API에 전달하기 위해 문단 형태 맞추기
+      const paragraphsForAPI = originalParagraphs.map((text, idx) => ({
+        id: idx + 1,
+        text
+      }));
+
+      // 4) API 호출
+      const res = await requestSimplifyText(dto.title, paragraphsForAPI, idToken);
+
+      console.log("✨ 문장 순화 API 응답:", res);
+
+      // 5) jobId 저장 (리포트 조회용)
+      lastJobId = res.jobId;
+
+      // 6) 순화된 문장 저장
+      if (res.data && Array.isArray(res.data.simplified_paragraphs)) {
+        simplifiedParagraphs = res.data.simplified_paragraphs.map(p => p.text);
+      } else {
+        console.warn("응답에 simplified_paragraphs가 없습니다:", res);
+        simplifiedParagraphs = [];
+      }
+
+      // 7) 보기모드 변경 후 렌더
+      currentMode = "simplified";
+      renderParagraphs();
+
+    } catch (err) {
+      console.error("❌ 문장 순화 실패:", err);
+      alert("문장 순화 중 오류가 발생했습니다.");
+    } finally {
+      hideSimplifyLoading();
+    }
+  });
+
+  // 📊 리포트 보기 버튼
+  document.getElementById("report-view")?.addEventListener("click", async () => {
+    console.log("📊 리포트 요청됨");
+
+    if (!lastJobId) {
+      alert("먼저 문장 순화를 실행해주세요.");
+      return;
+    }
+
+    try {
+      const { idToken } = await chrome.storage.local.get("idToken");
+
+      const report = await getSimplificationReport(lastJobId, idToken);
+
+      console.log("📊 리포트 결과:", report);
+
+      if (report.status === "processing") {
+        alert("리포트가 아직 생성 중입니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
+      if (report.status === "completed" && report.analysis) {
+        openReportModal(report.analysis);
+      } else {
+        alert("리포트 데이터가 올바르지 않습니다.");
+        console.warn("예상치 못한 리포트 응답:", report);
+      }
+
+    } catch (error) {
+      console.error("❌ 리포트 조회 실패:", error);
+      alert("리포트 조회 중 오류가 발생했습니다.");
+    }
+  });
 
   const readingGuide = document.createElement('div');
   readingGuide.id = 'reading-guide';
@@ -102,10 +228,10 @@ export function renderReaderMode(dto) {
   // ✅ 단어장 버튼 클릭 시 단어장 모드 실행
   document.getElementById("vocab-btn")?.addEventListener("click", activateWordMode);
 
-
   initFontController();
   initReadingGuide();
 
+  // 📄 본문 컨테이너 생성
   const container = document.createElement("div");
   container.id = "focus-reader";
   container.innerHTML = `
@@ -121,6 +247,106 @@ export function renderReaderMode(dto) {
     </div>
   `;
   document.body.appendChild(container);
+
+  // 🔹 최초 originalParagraphs 초기화 (이미지 제외)
+  const initialContent = document.querySelectorAll(".focus-content p");
+  originalParagraphs = [...initialContent].map(p => p.innerText);
+
+  // 🔁 문단 렌더링 함수 (보기 모드에 따라 다르게)
+  function renderParagraphs() {
+    const contentBox = document.querySelector(".focus-content");
+    if (!contentBox) return;
+
+    contentBox.innerHTML = `
+      <h1 class="focus-title">${dto.title}</h1>
+      ${originalParagraphs.map((text, i) => {
+        const orig = text?.replace(/\n/g, "<br>");
+        const simpRaw = simplifiedParagraphs[i] || text;
+        const simp = simpRaw?.replace(/\n/g, "<br>");
+
+        if (currentMode === "original") {
+          return `<p>${orig}</p>`;
+        }
+        if (currentMode === "simplified") {
+          return `<p>${simp}</p>`;
+        }
+        if (currentMode === "compare") {
+          return `
+            <p>
+              <strong>원문:</strong> ${orig}<br>
+              <strong>순화:</strong> ${simp}
+            </p>`;
+        }
+        // fallback
+        return `<p>${orig}</p>`;
+      }).join("")}
+    `;
+  }
+
+  // 📊 리포트 모달 UI
+  function openReportModal(analysis) {
+    const modal = document.createElement("div");
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.right = "0";
+    modal.style.bottom = "0";
+    modal.style.background = "rgba(0,0,0,0.45)";
+    modal.style.zIndex = "99999999";
+    modal.style.display = "flex";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+
+    const summary = analysis.summary || {};
+
+    modal.innerHTML = `
+      <div style="
+        background:white;
+        padding:24px 28px;
+        border-radius:12px;
+        width:420px;
+        max-height:70vh;
+        overflow-y:auto;
+        box-shadow:0 10px 30px rgba(0,0,0,0.18);
+        font-family:'Noto Sans KR', sans-serif;
+      ">
+        <h2 style="margin-top:0; margin-bottom:16px; font-size:20px;">문장 순화 리포트</h2>
+
+        <p style="margin:6px 0;">
+          <strong>가독성 향상:</strong>
+          ${summary.readability_improvement_percent ?? "-"}%
+        </p>
+        <p style="margin:6px 0;">
+          <strong>문자 수 감소:</strong>
+          ${summary.char_count_reduction_percent ?? "-"}%
+        </p>
+        <p style="margin:12px 0;">
+          <strong>핵심 메시지:</strong><br>
+          <span style="font-size:14px; color:#374151;">
+            ${summary.key_message ?? "서버에서 전달된 핵심 메시지가 없습니다."}
+          </span>
+        </p>
+
+        <div style="text-align:right; margin-top:18px;">
+          <button id="close-report-modal" style="
+            padding:8px 14px;
+            background:#ef4444;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:14px;
+          ">닫기</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById("close-report-modal")?.addEventListener("click", () => {
+      modal.remove();
+    });
+  }
 
   const readerStyle = document.createElement("style");
   readerStyle.textContent = `
@@ -173,30 +399,27 @@ export function renderReaderMode(dto) {
       from { opacity: 1; transform: translateY(0); }
       to { opacity: 0; transform: translateY(20px); }
     }
-      /* 문장 순화 패널 */
+    /* 문장 순화 패널 */
     .simplify-panel {
       position: fixed;
-      top: 60px; /* 기존보다 약간 위로 */
+      top: 60px;
       left: 0;
       right: 0;
       background: white;
       border-bottom: 1px solid #e5e7eb;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       display: flex;
-      justify-content: center; /* 전체를 가운데로 */
+      justify-content: center;
       align-items: center;
-      gap: 60px; /* 버튼 그룹 간 간격 */
-      padding: 18px 40px; /* 위아래 여백 줄임 */
+      gap: 60px;
+      padding: 18px 40px;
       transform: translateY(-100%);
       transition: transform 0.3s ease;
       z-index: 999999;
     }
-
     .simplify-panel.show {
       transform: translateY(0);
     }
-
-    /* 버튼 스타일 */
     .simplify-panel button {
       background: #f3f4f6;
       border: 1px solid #d1d5db;
@@ -205,45 +428,36 @@ export function renderReaderMode(dto) {
       cursor: pointer;
       transition: background 0.2s;
     }
-
     .simplify-panel button:hover {
       background: #e5e7eb;
     }
-
-    /* 보기 모드 섹션 (세로 정렬) */
     .center-section {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      align-items: flex-start; /* 왼쪽 정렬 */
+      align-items: flex-start;
     }
-
     .center-section label {
       font-size: 15px;
       cursor: pointer;
     }
-
     /* 단어장 하이라이트 */
     .highlight-word {
       background: none;
       color: #111;
-      border-bottom: 2px solid #facc15; /* 노란 밑줄 */
+      border-bottom: 2px solid #facc15;
       transition: border-color 0.2s, transform 0.15s;
       cursor: pointer;
     }
-
     .highlight-word:hover {
-      border-color: #f59e0b; /* hover 시 조금 더 진한 노란색 */
+      border-color: #f59e0b;
       transform: scale(1.05);
     }
-
-
-
-      /* 오른쪽 단어 뜻 패널 */
+    /* 오른쪽 단어 뜻 패널 */
     #word-meaning-panel {
       position: fixed;
       top: 70px;
-      right: -320px; /* 처음엔 숨김 상태 */
+      right: -320px;
       width: 300px;
       height: calc(100% - 70px);
       background: #ffffff;
@@ -256,11 +470,9 @@ export function renderReaderMode(dto) {
       transition: right 0.3s ease;
       z-index: 999999;
     }
-
     #word-meaning-panel.show {
       right: 0;
     }
-
     .word-panel-header {
       display: flex;
       justify-content: space-between;
@@ -268,35 +480,82 @@ export function renderReaderMode(dto) {
       margin-bottom: 10px;
       font-weight: 600;
     }
-
     #close-word-panel {
       background: none;
       border: none;
       font-size: 16px;
       cursor: pointer;
     }
-
     .word-panel-body h3 {
       font-size: 18px;
       margin-bottom: 8px;
       color: #111827;
     }
-
     .word-panel-body p {
       font-size: 15px;
       color: #374151;
       line-height: 1.5;
+    }
+      /* 로딩창 */
+    #simplify-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999999;
+    }
+
+    .loading-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.4);
+    }
+
+    .loading-box {
+      position: relative;
+      z-index: 9999999999;
+      background: white;
+      padding: 24px 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .loader {
+      width: 28px;
+      height: 28px;
+      border: 4px solid #ddd;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   `;
   document.head.appendChild(readerStyle);
 
   exitBtn?.addEventListener("click", () => {
     const content = document.querySelector(".focus-content");
-    content.style.animation = "fadeOut 0.4s ease forwards";
-    setTimeout(() => location.reload(), 400);
+    if (content) {
+      content.style.animation = "fadeOut 0.4s ease forwards";
+      setTimeout(() => location.reload(), 400);
+    } else {
+      location.reload();
+    }
   });
 }
 
+// 🔹 단어장 모드
 let isVocabMode = false;
 let wordPanel; // 패널 전역 참조
 
@@ -307,7 +566,7 @@ function activateWordMode() {
   // 이미 단어장 모드일 경우 해제
   if (isVocabMode) {
     content.innerHTML = content.dataset.originalHtml || content.innerHTML;
-    if (wordPanel) wordPanel.remove(); // 패널 제거
+    if (wordPanel) wordPanel.remove();
     isVocabMode = false;
     console.log("단어장 모드 종료");
     return;
@@ -317,7 +576,7 @@ function activateWordMode() {
   console.log("단어장 모드 실행됨");
   content.dataset.originalHtml = content.innerHTML;
 
-  //Test용
+  // Test용 어려운 단어 목록
   const difficultWords = [
     { word: "의사결정", meaning: "어떤 문제에 대해 판단을 내리는 행위" },
     { word: "아이폰", meaning: "예시: 애플에서 만든 핸드폰" }
@@ -364,4 +623,3 @@ function activateWordMode() {
 
   isVocabMode = true;
 }
-
