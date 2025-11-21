@@ -21,26 +21,63 @@
 
     <!-- 프로필 선택 영역 -->
     <div id="profile-selection" style="display:none;">
-      <h3 style="margin: 10px 0; font-size: 16px; color: #333;">프로필 설정</h3>
+      <h3 style="margin: 10px 0 15px 0; font-size: 16px; color: #333;">프로필 설정</h3>
       
-      <!-- 읽기 특성 선택 -->
+      <!-- 1. 문장 분해 정도 선택 -->
       <div class="profile-section">
-        <label style="font-size: 14px; font-weight: 500; color: #555; margin-bottom: 8px; display: block;">해당하는 읽기 특성을 선택해주세요.</label>
-        <div class="checkbox-group">
-          <label class="checkbox-label">
-            <input type="checkbox" name="reading-profile" value="문장">
-            <span>긴 문장을 이해하기 어려워합니다.</span>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" name="reading-profile" value="어휘">
-            <span>어휘력이 다소 부족한 편입니다.</span>
-          </label>
+        <label class="section-label">문장 분해 정도를 선택해주세요.</label>
+        
+        <div class="slider-container">
+          <div class="slider-labels">
+            <span>레벨 0</span>
+            <span>레벨 1</span>
+            <span>레벨 2</span>
+          </div>
+          <div class="slider-track">
+            <input type="range" name="sentence-level" min="0" max="2" step="1" value="0" class="level-slider">
+            <div class="slider-indicators">
+              <span class="slider-dot" data-value="0"></span>
+              <span class="slider-dot" data-value="1"></span>
+              <span class="slider-dot" data-value="2"></span>
+            </div>
+          </div>
+          <div class="slider-descriptions">
+            <span>원문</span>
+            <span>약간 나눔</span>
+            <span>많이 나눔</span>
+          </div>
         </div>
       </div>
 
-      <!-- 학습 분야 선택 -->
+      <!-- 2. 어휘 난이도 선택 -->
       <div class="profile-section">
-        <label style="font-size: 14px; font-weight: 500; color: #555; margin-bottom: 8px; display: block;">추가로 학습이 필요하다고 느끼는 분야를 선택해주세요.</label>
+        <label class="section-label">어휘 난이도 정도를 선택해주세요.</label>
+        
+        <div class="slider-container">
+          <div class="slider-labels">
+            <span>레벨 0</span>
+            <span>레벨 1</span>
+            <span>레벨 2</span>
+          </div>
+          <div class="slider-track">
+            <input type="range" name="vocab-level" min="0" max="2" step="1" value="0" class="level-slider">
+            <div class="slider-indicators">
+              <span class="slider-dot" data-value="0"></span>
+              <span class="slider-dot" data-value="1"></span>
+              <span class="slider-dot" data-value="2"></span>
+            </div>
+          </div>
+          <div class="slider-descriptions">
+            <span>원문</span>
+            <span>약간 쉬움</span>
+            <span>많이 쉬움</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 학습 분야 선택 -->
+      <div class="profile-section">
+        <label class="section-label">배우고 싶은 분야를 선택해주세요.</label>
         <div class="tag-group">
           <label class="tag-label">
             <input type="checkbox" name="known-topics" value="정치">
