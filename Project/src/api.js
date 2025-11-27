@@ -1,6 +1,5 @@
 // src/api.js - 수정됨
 
-// [수정 1] 끝에 /api 제거 (함수 이름이 바로 붙어야 함)
 const API_BASE_URL = 'https://us-central1-igeul-66a16.cloudfunctions.net'; 
 
 class ApiService {

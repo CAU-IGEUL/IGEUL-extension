@@ -19,6 +19,23 @@ export function getToolbarHTML() {
             <line x1="3" y1="18" x2="21" y2="18" opacity="0.3"></line>
           </svg>
         </button>
+
+        <button id="summary-toggle" title="본문 요약">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+            <line x1="9" y1="12" x2="15" y2="12"></line>
+            <line x1="9" y1="9" x2="10" y2="9"></line>
+          </svg>
+        </button>
+
+        <button id="profile-toggle" title="프로필 설정">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
       </div>
 
       <div class="right-btns">
@@ -131,6 +148,158 @@ export function getToolbarHTML() {
 
         <div class="guide-hint">
           Ctrl + 마우스휠로 위치 조정 가능합니다
+        </div>
+      </div>
+    </div>
+
+    <!-- 요약 모달 -->
+    <div id="summary-modal" class="summary-modal" style="display: none;">
+      <div class="summary-modal-backdrop"></div>
+      <div class="summary-modal-content">
+        <div class="summary-modal-header">
+          <h3>본문 요약</h3>
+          <button id="summary-modal-close" class="summary-close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="summary-modal-body">
+          <div id="summary-loading" class="summary-loading">
+            <div class="summary-spinner"></div>
+            <p>요약을 생성하는 중입니다...</p>
+          </div>
+          <div id="summary-content" class="summary-content" style="display: none;">
+            <div class="summary-text">
+              여기에 요약된 내용이 표시됩니다.
+            </div>
+          </div>
+          <div id="summary-error" class="summary-error" style="display: none;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>요약을 생성하는 중 오류가 발생했습니다.</p>
+            <button id="summary-retry-btn" class="summary-retry-btn">다시 시도</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 프로필 설정 모달 -->
+    <div id="profile-modal" class="profile-modal" style="display: none;">
+      <div class="profile-modal-backdrop"></div>
+      <div class="profile-modal-content">
+        <div class="profile-modal-header">
+          <h3>프로필 설정</h3>
+          <button id="profile-modal-close" class="profile-close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="profile-modal-body">
+          <div id="profile-loading" class="profile-loading">
+            <div class="profile-spinner"></div>
+            <p>프로필을 불러오는 중입니다...</p>
+          </div>
+          
+          <div id="profile-content" class="profile-content" style="display: none;">
+            <!-- 문장 분해 정도 -->
+            <div class="profile-section">
+              <label class="profile-section-label">문장 분해 정도를 선택해주세요.</label>
+              <div class="profile-slider-container">
+                <div class="profile-slider-labels">
+                  <span>레벨 0</span>
+                  <span>레벨 1</span>
+                  <span>레벨 2</span>
+                </div>
+                <div class="profile-slider-track">
+                  <input type="range" name="sentence-level" min="0" max="2" step="1" value="0" class="profile-level-slider">
+                  <div class="profile-slider-indicators">
+                    <span class="profile-slider-dot" data-value="0"></span>
+                    <span class="profile-slider-dot" data-value="1"></span>
+                    <span class="profile-slider-dot" data-value="2"></span>
+                  </div>
+                </div>
+                <div class="profile-slider-descriptions">
+                  <span>원문</span>
+                  <span>약간 나눔</span>
+                  <span>많이 나눔</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 어휘 난이도 -->
+            <div class="profile-section">
+              <label class="profile-section-label">어휘 난이도 정도를 선택해주세요.</label>
+              <div class="profile-slider-container">
+                <div class="profile-slider-labels">
+                  <span>레벨 0</span>
+                  <span>레벨 1</span>
+                  <span>레벨 2</span>
+                </div>
+                <div class="profile-slider-track">
+                  <input type="range" name="vocab-level" min="0" max="2" step="1" value="0" class="profile-level-slider">
+                  <div class="profile-slider-indicators">
+                    <span class="profile-slider-dot" data-value="0"></span>
+                    <span class="profile-slider-dot" data-value="1"></span>
+                    <span class="profile-slider-dot" data-value="2"></span>
+                  </div>
+                </div>
+                <div class="profile-slider-descriptions">
+                  <span>원문</span>
+                  <span>약간 쉬움</span>
+                  <span>많이 쉬움</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 학습 분야 -->
+            <div class="profile-section">
+              <label class="profile-section-label">배우고 싶은 분야를 선택해주세요.</label>
+              <div class="profile-tag-group">
+                <label class="profile-tag-label">
+                  <input type="checkbox" name="known-topics" value="정치">
+                  <span>정치</span>
+                </label>
+                <label class="profile-tag-label">
+                  <input type="checkbox" name="known-topics" value="경제">
+                  <span>경제</span>
+                </label>
+                <label class="profile-tag-label">
+                  <input type="checkbox" name="known-topics" value="사회">
+                  <span>사회</span>
+                </label>
+                <label class="profile-tag-label">
+                  <input type="checkbox" name="known-topics" value="생활/문화">
+                  <span>생활/문화</span>
+                </label>
+                <label class="profile-tag-label">
+                  <input type="checkbox" name="known-topics" value="IT">
+                  <span>IT</span>
+                </label>
+                <label class="profile-tag-label">
+                  <input type="checkbox" name="known-topics" value="과학">
+                  <span>과학</span>
+                </label>
+              </div>
+            </div>
+
+            <button id="profile-save-btn" class="profile-save-btn">💾 저장하기</button>
+          </div>
+
+          <div id="profile-error" class="profile-error" style="display: none;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>프로필을 불러오는 중 오류가 발생했습니다.</p>
+          </div>
         </div>
       </div>
     </div>

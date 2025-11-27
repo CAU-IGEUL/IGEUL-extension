@@ -4,6 +4,8 @@ import { loadFonts, initFontController } from './modules/changeTextStyle.js';
 import { initReadingGuide } from './modules/readingGuide.js';
 import { getToolbarHTML } from './styles/toolbarHTML.js';
 import { applyToolbarStyles } from './styles/toolbarCSS.js';
+import { initSummary } from './modules/summary.js';
+import { initProfileSettings } from './modules/profileSettings.js';
 
 (function() {
 toggleToolbar();
@@ -87,6 +89,8 @@ function toggleToolbar() {
 
     initFontController();
     initReadingGuide();
+    initSummary();
+    initProfileSettings();  
     }
 }
 })();
