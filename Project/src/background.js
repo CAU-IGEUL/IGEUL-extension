@@ -46,7 +46,7 @@ function handleGoogleLogin() {
         console.log('Login Successful (via credential):', user.displayName, user.email);
         user.getIdToken().then((idToken) => {
           console.log('Firebase ID Token:', idToken);
-
+          
           chrome.storage.local.set({ idToken });
 
           fetch('https://us-central1-igeul-66a16.cloudfunctions.net/getUserProfile', {

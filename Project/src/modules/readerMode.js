@@ -5,9 +5,19 @@ import { initReadingGuide } from './readingGuide.js';
 import { getToolbarHTML } from '../styles/toolbarHTML.js';
 import { applyToolbarStyles } from '../styles/toolbarCSS.js';
 import { requestSimplifyText, getSimplificationReport } from "./api.js";
+import {
+  dictionaryData,
+  vocabMode,
+  initDictionaryAnalysis,
+  wrapWordsInTextNodes,
+  attachDictionaryEvents
+} from "./dictionary.js";
 
+/* -------------------------------------------------------
+   메인 함수
+------------------------------------------------------- */
 export function renderReaderMode(dto) {
-
+  /* -------- 문장 순화 로딩창 -------- */
   function showSimplifyLoading() {
     let loader = document.getElementById("simplify-loading");
     if (!loader) {
@@ -30,22 +40,27 @@ export function renderReaderMode(dto) {
     if (loader) loader.style.display = "none";
   }
 
+  /* -------- 기본 초기화 -------- */
   document.body.innerHTML = "";
 
-  // 🔹 문장 순화/리포트용 상태
-  let originalParagraphs = [];
-  let simplifiedParagraphs = [];
-  let lastJobId = null;
-  let currentMode = "original";
+  // 순화/리포트 상태
+  let originalParagraphs = [];     // 텍스트 문단 원본 배열 (이미지 제외)
+  let simplifiedParagraphs = [];   // 서버에서 받은 순화 문단 배열 (텍스트 문단 기준)
+  let lastJobId = null;            // 리포트 조회용 jobId
+  let currentMode = "original";    // original | simplified | compare
 
   loadFonts();
   const style = applyToolbarStyles();
   document.head.appendChild(style);
 
+  /* -------- Toolbar -------- */
   const toolbar = document.createElement("div");
   toolbar.id = "custom-toolbar";
   toolbar.innerHTML = getToolbarHTML();
   document.body.prepend(toolbar);
+
+  const vocabBtn = document.getElementById("vocab-btn");
+  if (vocabBtn) vocabBtn.textContent = "🔍 단어장";
 
   const extractBtn = document.getElementById("extract-btn");
   const readerBtn = document.getElementById("reader-btn");
@@ -60,7 +75,9 @@ export function renderReaderMode(dto) {
     exitBtn.style.border = "none";
   }
 
-  // ✅ 문장 순화 패널 생성
+  /* -------------------------------------------------------
+     🔥 문장 순화 패널 UI
+  ------------------------------------------------------- */
   const simplifyPanel = document.createElement("div");
   simplifyPanel.id = "simplify-panel";
   simplifyPanel.className = "simplify-panel";
@@ -79,119 +96,35 @@ export function renderReaderMode(dto) {
       <button id="report-view">📊 리포트 보기</button>
     </div>
   `;
-  document.body.prepend(simplifyPanel); // toolbar 바로 아래 삽입
+  document.body.prepend(simplifyPanel);
 
-  // ✅ 문장 순화 버튼 클릭 시 패널 토글
+  // 문장 순화 버튼 → 패널 토글
   const simplifyBtn = document.getElementById("simplify-btn");
   simplifyBtn?.addEventListener("click", () => {
     simplifyPanel.classList.toggle("show");
   });
 
-  // ✅ 보기 모드 라디오 버튼 이벤트
+  // 보기 모드 라디오 이벤트
   const originRadio = document.getElementById("origin-only");
   const simplifiedRadio = document.getElementById("simplified-only");
   const compareRadio = document.getElementById("compare-view");
 
-  // 원문만 보기
   originRadio?.addEventListener("change", () => {
     currentMode = "original";
     renderParagraphs();
   });
-
   simplifiedRadio?.addEventListener("change", () => {
     currentMode = "simplified";
     renderParagraphs();
   });
-
   compareRadio?.addEventListener("change", () => {
     currentMode = "compare";
     renderParagraphs();
   });
 
-  // 🪄 문장 순화 실행 버튼
-  document.getElementById("run-simplify")?.addEventListener("click", async () => {
-    console.log("🪄 문장 순화 요청됨");
-    chrome.storage.local.get(null, res => console.log("🔥 local storage:", res));
-
-
-    showSimplifyLoading();
-
-    try {
-      // 1) Firebase idToken 가져오기
-      const { idToken } = await chrome.storage.local.get("idToken");
-
-      // 2) 본문 원문 다시 읽어오기 (안전용)
-      const content = document.querySelectorAll(".focus-content p");
-      originalParagraphs = [...content].map(p => p.innerText);
-
-      // 3) API에 전달하기 위해 문단 형태 맞추기
-      const paragraphsForAPI = originalParagraphs.map((text, idx) => ({
-        id: idx + 1,
-        text
-      }));
-
-      // 4) API 호출
-      const res = await requestSimplifyText(dto.title, paragraphsForAPI, idToken);
-
-      console.log("✨ 문장 순화 API 응답:", res);
-
-      // 5) jobId 저장 (리포트 조회용)
-      lastJobId = res.jobId;
-
-      // 6) 순화된 문장 저장
-      if (res.data && Array.isArray(res.data.simplified_paragraphs)) {
-        simplifiedParagraphs = res.data.simplified_paragraphs.map(p => p.text);
-      } else {
-        console.warn("응답에 simplified_paragraphs가 없습니다:", res);
-        simplifiedParagraphs = [];
-      }
-
-      // 7) 보기모드 변경 후 렌더
-      currentMode = "simplified";
-      renderParagraphs();
-
-    } catch (err) {
-      console.error("❌ 문장 순화 실패:", err);
-      alert("문장 순화 중 오류가 발생했습니다.");
-    } finally {
-      hideSimplifyLoading();
-    }
-  });
-
-  // 📊 리포트 보기 버튼
-  document.getElementById("report-view")?.addEventListener("click", async () => {
-    console.log("📊 리포트 요청됨");
-
-    if (!lastJobId) {
-      alert("먼저 문장 순화를 실행해주세요.");
-      return;
-    }
-
-    try {
-      const { idToken } = await chrome.storage.local.get("idToken");
-
-      const report = await getSimplificationReport(lastJobId, idToken);
-
-      console.log("📊 리포트 결과:", report);
-
-      if (report.status === "processing") {
-        alert("리포트가 아직 생성 중입니다. 잠시 후 다시 시도해주세요.");
-        return;
-      }
-
-      if (report.status === "completed" && report.analysis) {
-        openReportModal(report.analysis);
-      } else {
-        alert("리포트 데이터가 올바르지 않습니다.");
-        console.warn("예상치 못한 리포트 응답:", report);
-      }
-
-    } catch (error) {
-      console.error("❌ 리포트 조회 실패:", error);
-      alert("리포트 조회 중 오류가 발생했습니다.");
-    }
-  });
-
+  /* -------------------------------------------------------
+     📘 리딩 가이드 & 설정 패널
+  ------------------------------------------------------- */
   const readingGuide = document.createElement('div');
   readingGuide.id = 'reading-guide';
   readingGuide.style.display = 'none';
@@ -212,7 +145,7 @@ export function renderReaderMode(dto) {
     const guidePanel = document.getElementById('guide-panel');
     const settingsPanel = document.getElementById('settings-panel');
     const toggleBtn = document.getElementById('reading-guide-toggle');
-  
+
     if (guidePanel.style.display === 'none') {
       guidePanel.style.display = 'block';
       settingsPanel.style.display = 'none';
@@ -225,13 +158,12 @@ export function renderReaderMode(dto) {
     }
   });
 
-  // ✅ 단어장 버튼 클릭 시 단어장 모드 실행
-  document.getElementById("vocab-btn")?.addEventListener("click", activateWordMode);
-
   initFontController();
   initReadingGuide();
 
-  // 📄 본문 컨테이너 생성
+  /* -------------------------------------------------------
+     📄 본문 영역 생성 (이미지 + 텍스트)
+  ------------------------------------------------------- */
   const container = document.createElement("div");
   container.id = "focus-reader";
   container.innerHTML = `
@@ -248,42 +180,188 @@ export function renderReaderMode(dto) {
   `;
   document.body.appendChild(container);
 
-  // 🔹 최초 originalParagraphs 초기화 (이미지 제외)
-  const initialContent = document.querySelectorAll(".focus-content p");
-  originalParagraphs = [...initialContent].map(p => p.innerText);
+  /* -------------------------------------------------------
+     🔥 원문 문단 배열 구성 (텍스트 문단만)
+     - 서버로 보내는 문단 기준이 됨
+  ------------------------------------------------------- */
+  const textParagraphs = dto.paragraphs.filter(p => p.type === "text");
+  originalParagraphs = textParagraphs.map(p => (p.content || "").trim());
 
-  // 🔁 문단 렌더링 함수 (보기 모드에 따라 다르게)
+  // 단어장 분석용 문단 (텍스트만)
+  const dictionaryParagraphs = dto.paragraphs
+    .filter(p => p.type === "text")
+    .map((p, idx) => ({
+      id: idx + 1,
+      text: p.content
+    }));
+  // 🔍 단어장 분석 초기화 (서버 연동용)
+  initDictionaryAnalysis(dictionaryParagraphs);
+
+  /* -------------------------------------------------------
+     🪄 문장 순화 실행
+  ------------------------------------------------------- */
+  document.getElementById("run-simplify")?.addEventListener("click", async () => {
+    console.log("🪄 문장 순화 요청됨");
+    showSimplifyLoading();
+
+    try {
+      const { idToken } = await chrome.storage.local.get("idToken");
+      if (!idToken) {
+        alert("로그인 정보가 없습니다. 먼저 로그인 후 다시 시도해주세요.");
+        console.error("❌ idToken 없음");
+        return;
+      }
+
+      // 서버에 보낼 문단 구조
+      const paragraphsForAPI = originalParagraphs.map((text, idx) => ({
+        id: idx + 1,
+        text
+      }));
+
+      const res = await requestSimplifyText(dto.title, paragraphsForAPI, idToken);
+      console.log("✨ 문장 순화 API 응답:", res);
+
+      lastJobId = res.jobId;
+
+      if (res.data && Array.isArray(res.data.simplified_paragraphs)) {
+        // id 순서대로 정렬 후 텍스트만 배열로
+        const sorted = [...res.data.simplified_paragraphs].sort((a, b) => a.id - b.id);
+        simplifiedParagraphs = sorted.map(p => p.text || "");
+      } else {
+        console.warn("응답에 simplified_paragraphs가 없습니다:", res);
+        simplifiedParagraphs = [];
+      }
+
+      currentMode = "simplified";
+      renderParagraphs();
+
+    } catch (err) {
+      console.error("❌ 문장 순화 실패:", err);
+      alert("문장 순화 중 오류가 발생했습니다.");
+    } finally {
+      hideSimplifyLoading();
+    }
+  });
+
+  /* -------------------------------------------------------
+     📊 리포트 조회
+  ------------------------------------------------------- */
+  document.getElementById("report-view")?.addEventListener("click", async () => {
+    if (!lastJobId) {
+      alert("먼저 문장 순화를 실행해주세요.");
+      return;
+    }
+
+    try {
+      const { idToken } = await chrome.storage.local.get("idToken");
+      if (!idToken) {
+        alert("로그인 정보가 없습니다. 먼저 로그인 후 다시 시도해주세요.");
+        console.error("❌ idToken 없음 (리포트 조회)");
+        return;
+      }
+
+      const report = await getSimplificationReport(lastJobId, idToken);
+      console.log("📊 리포트 결과:", report);
+
+      if (report.status === "processing") {
+        alert("리포트가 아직 생성 중입니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
+      if (report.status === "completed" && report.analysis) {
+        openReportModal(report.analysis);
+      } else {
+        alert("리포트 데이터가 올바르지 않습니다.");
+        console.warn("예상치 못한 리포트 응답:", report);
+      }
+
+    } catch (e) {
+      console.error("❌ 리포트 조회 실패:", e);
+      alert("리포트 조회 중 오류가 발생했습니다.");
+    }
+  });
+
+  /* -------------------------------------------------------
+     🔥 문단 렌더링 함수
+     - dto.paragraphs 순서를 기준으로
+     - 이미지 유지 + 텍스트만 순화/비교
+  ------------------------------------------------------- */
   function renderParagraphs() {
     const contentBox = document.querySelector(".focus-content");
     if (!contentBox) return;
 
-    contentBox.innerHTML = `
-      <h1 class="focus-title">${dto.title}</h1>
-      ${originalParagraphs.map((text, i) => {
-        const orig = text?.replace(/\n/g, "<br>");
-        const simpRaw = simplifiedParagraphs[i] || text;
-        const simp = simpRaw?.replace(/\n/g, "<br>");
+    let html = `<h1 class="focus-title">${dto.title}</h1>`;
 
-        if (currentMode === "original") {
-          return `<p>${orig}</p>`;
+    /* 1) 원문만 보기 */
+    if (currentMode === "original") {
+      dto.paragraphs.forEach(p => {
+        if (p.type === "image") {
+          html += `<img src="${p.content}" alt="image" class="focus-image">`;
+        } else {
+          const orig = (p.content || "").replace(/\n/g, "<br>");
+          html += `<p>${orig}</p>`;
         }
-        if (currentMode === "simplified") {
-          return `<p>${simp}</p>`;
+      });
+    }
+
+    /* 2) 순화된 문장만 보기 */
+    else if (currentMode === "simplified") {
+      // 🔹 원본 이미지들은 그대로 한 번 쭉 보여주고
+      dto.paragraphs.forEach(p => {
+        if (p.type === "image") {
+          html += `<img src="${p.content}" alt="image" class="focus-image">`;
         }
-        if (currentMode === "compare") {
-          return `
-            <p>
-              <strong>원문:</strong> ${orig}<br>
-              <strong>순화:</strong> ${simp}
-            </p>`;
+      });
+
+      // 🔹 그 아래에 서버에서 받은 순화 문단 전체를 순서대로 전부 출력
+      simplifiedParagraphs.forEach(text => {
+        const simp = (text || "").replace(/\n/g, "<br>");
+        html += `<p>${simp}</p>`;
+      });
+    }
+
+    /* 3) 원문 같이 보기 (비교 모드) */
+    else if (currentMode === "compare") {
+      // 왼쪽: 원본 기사 전체 (텍스트 + 이미지)
+      let origHtml = "";
+      dto.paragraphs.forEach(p => {
+        if (p.type === "image") {
+          origHtml += `<img src="${p.content}" alt="image" class="focus-image">`;
+        } else {
+          origHtml += `<p>${(p.content || "").replace(/\n/g, "<br>")}</p>`;
         }
-        // fallback
-        return `<p>${orig}</p>`;
-      }).join("")}
-    `;
+      });
+
+      // 오른쪽: 순화 텍스트 전체 (이미지는 서버가 모르니까 텍스트만)
+      let simpHtml = "";
+      simplifiedParagraphs.forEach(text => {
+        simpHtml += `<p>${(text || "").replace(/\n/g, "<br>")}</p>`;
+      });
+
+      html += `
+        <div class="compare-block">
+          <div class="compare-original">${origHtml}</div>
+          <div class="compare-simplified">${simpHtml}</div>
+        </div>
+      `;
+    }
+
+    contentBox.innerHTML = html;
+
+    // 📘 단어장 모드가 켜져 있으면 다시 하이라이트 적용
+    if (vocabMode) {
+      const target = document.querySelector(".focus-content");
+      if (target && dictionaryData) {
+        wrapWordsInTextNodes(target, dictionaryData);
+        attachDictionaryEvents(dictionaryData);
+      }
+    }
   }
 
-  // 📊 리포트 모달 UI
+
+  /* -------------------------------------------------------
+     📊 리포트 모달 UI
+  ------------------------------------------------------- */
   function openReportModal(analysis) {
     const modal = document.createElement("div");
     modal.style.position = "fixed";
@@ -312,19 +390,12 @@ export function renderReaderMode(dto) {
       ">
         <h2 style="margin-top:0; margin-bottom:16px; font-size:20px;">문장 순화 리포트</h2>
 
-        <p style="margin:6px 0;">
-          <strong>가독성 향상:</strong>
-          ${summary.readability_improvement_percent ?? "-"}%
-        </p>
-        <p style="margin:6px 0;">
-          <strong>문자 수 감소:</strong>
-          ${summary.char_count_reduction_percent ?? "-"}%
-        </p>
-        <p style="margin:12px 0;">
-          <strong>핵심 메시지:</strong><br>
-          <span style="font-size:14px; color:#374151;">
-            ${summary.key_message ?? "서버에서 전달된 핵심 메시지가 없습니다."}
-          </span>
+        <p><strong>가독성 향상:</strong> ${summary.readability_improvement_percent ?? "-"}%</p>
+        <p><strong>문자 수 감소:</strong> ${summary.char_count_reduction_percent ?? "-"}%</p>
+
+        <p style="margin-top:12px;"><strong>핵심 메시지:</strong></p>
+        <p style="font-size:14px; color:#374151;">
+          ${summary.key_message ?? "서버에서 전달된 핵심 메시지가 없습니다."}
         </p>
 
         <div style="text-align:right; margin-top:18px;">
@@ -342,12 +413,12 @@ export function renderReaderMode(dto) {
     `;
 
     document.body.appendChild(modal);
-
-    document.getElementById("close-report-modal")?.addEventListener("click", () => {
-      modal.remove();
-    });
+    document.getElementById("close-report-modal")?.addEventListener("click", () => modal.remove());
   }
 
+  /* -------------------------------------------------------
+     📚 리더모드 스타일
+  ------------------------------------------------------- */
   const readerStyle = document.createElement("style");
   readerStyle.textContent = `
     body {
@@ -357,6 +428,7 @@ export function renderReaderMode(dto) {
       line-height: 1.7;
       color: #222;
     }
+
     .focus-content {
       max-width: 720px;
       background: white;
@@ -369,6 +441,7 @@ export function renderReaderMode(dto) {
       animation: fadeIn 0.5s ease forwards;
       text-align: left;
     }
+
     .focus-title {
       text-align: center !important;
       font-size: 28px !important;
@@ -377,20 +450,37 @@ export function renderReaderMode(dto) {
       line-height: 1.3 !important;
       color: #111 !important;
     }
-    .focus-title * {
-      font-size: inherit !important;
-      font-weight: inherit !important;
-      color: inherit !important;
-    }
+
     .focus-content p {
       margin-bottom: 1em;
       font-size: 17px;
     }
+
     .focus-image {
       width: 100%;
       margin: 20px 0;
       border-radius: 8px;
     }
+
+    /* Compare UI */
+    .compare-block {
+      display: flex;
+      gap: 20px;
+      padding: 12px 0;
+    }
+    .compare-original,
+    .compare-simplified {
+      flex: 1;
+      padding: 12px 14px;
+      background: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      font-size: 16px;
+      line-height: 1.6;
+      white-space: normal;
+    }
+
+    /* Fade animations */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -399,6 +489,7 @@ export function renderReaderMode(dto) {
       from { opacity: 1; transform: translateY(0); }
       to { opacity: 0; transform: translateY(20px); }
     }
+
     /* 문장 순화 패널 */
     .simplify-panel {
       position: fixed;
@@ -417,9 +508,11 @@ export function renderReaderMode(dto) {
       transition: transform 0.3s ease;
       z-index: 999999;
     }
+
     .simplify-panel.show {
       transform: translateY(0);
     }
+
     .simplify-panel button {
       background: #f3f4f6;
       border: 1px solid #d1d5db;
@@ -428,19 +521,23 @@ export function renderReaderMode(dto) {
       cursor: pointer;
       transition: background 0.2s;
     }
+
     .simplify-panel button:hover {
       background: #e5e7eb;
     }
+
     .center-section {
       display: flex;
       flex-direction: column;
       gap: 4px;
       align-items: flex-start;
     }
+
     .center-section label {
       font-size: 15px;
       cursor: pointer;
     }
+
     /* 단어장 하이라이트 */
     .highlight-word {
       background: none;
@@ -453,7 +550,8 @@ export function renderReaderMode(dto) {
       border-color: #f59e0b;
       transform: scale(1.05);
     }
-    /* 오른쪽 단어 뜻 패널 */
+
+    /* 단어 뜻 패널 */
     #word-meaning-panel {
       position: fixed;
       top: 70px;
@@ -470,9 +568,11 @@ export function renderReaderMode(dto) {
       transition: right 0.3s ease;
       z-index: 999999;
     }
+
     #word-meaning-panel.show {
       right: 0;
     }
+
     .word-panel-header {
       display: flex;
       justify-content: space-between;
@@ -480,23 +580,37 @@ export function renderReaderMode(dto) {
       margin-bottom: 10px;
       font-weight: 600;
     }
+
     #close-word-panel {
       background: none;
       border: none;
       font-size: 16px;
       cursor: pointer;
     }
+
     .word-panel-body h3 {
       font-size: 18px;
       margin-bottom: 8px;
       color: #111827;
     }
+
     .word-panel-body p {
       font-size: 15px;
       color: #374151;
       line-height: 1.5;
     }
-      /* 로딩창 */
+
+    .dict-image {
+      width: 100%;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+
+    .dictionary-word {
+      cursor: pointer !important;
+    }
+
+    /* 순화 로딩창 */
     #simplify-loading {
       position: fixed;
       top: 0;
@@ -544,6 +658,9 @@ export function renderReaderMode(dto) {
   `;
   document.head.appendChild(readerStyle);
 
+  /* -------------------------------------------------------
+     ❌ Exit 버튼
+  ------------------------------------------------------- */
   exitBtn?.addEventListener("click", () => {
     const content = document.querySelector(".focus-content");
     if (content) {
@@ -553,73 +670,6 @@ export function renderReaderMode(dto) {
       location.reload();
     }
   });
-}
+} // renderReaderMode 끝
 
-// 🔹 단어장 모드
-let isVocabMode = false;
-let wordPanel; // 패널 전역 참조
-
-function activateWordMode() {
-  const content = document.querySelector(".focus-content");
-  if (!content) return;
-
-  // 이미 단어장 모드일 경우 해제
-  if (isVocabMode) {
-    content.innerHTML = content.dataset.originalHtml || content.innerHTML;
-    if (wordPanel) wordPanel.remove();
-    isVocabMode = false;
-    console.log("단어장 모드 종료");
-    return;
-  }
-
-  // 모드 ON
-  console.log("단어장 모드 실행됨");
-  content.dataset.originalHtml = content.innerHTML;
-
-  // Test용 어려운 단어 목록
-  const difficultWords = [
-    { word: "의사결정", meaning: "어떤 문제에 대해 판단을 내리는 행위" },
-    { word: "아이폰", meaning: "예시: 애플에서 만든 핸드폰" }
-  ];
-
-  let html = content.innerHTML;
-  difficultWords.forEach(({ word, meaning }) => {
-    const regex = new RegExp(`(${word})`, "g");
-    html = html.replace(
-      regex,
-      `<span class="highlight-word" data-meaning="${meaning}">$1</span>`
-    );
-  });
-  content.innerHTML = html;
-
-  // 👉 오른쪽 뜻 패널 생성
-  wordPanel = document.createElement("div");
-  wordPanel.id = "word-meaning-panel";
-  wordPanel.innerHTML = `
-    <div class="word-panel-header">
-      <span>📘 단어 사전</span>
-      <button id="close-word-panel">✖</button>
-    </div>
-    <div class="word-panel-body">
-      <h3 id="word-title">단어를 선택하세요</h3>
-      <p id="word-meaning"></p>
-    </div>
-  `;
-  document.body.appendChild(wordPanel);
-
-  // 단어 클릭 이벤트
-  document.querySelectorAll(".highlight-word").forEach(span => {
-    span.addEventListener("click", () => {
-      document.getElementById("word-title").textContent = span.textContent;
-      document.getElementById("word-meaning").textContent = span.dataset.meaning;
-      wordPanel.classList.add("show");
-    });
-  });
-
-  // 닫기 버튼
-  document.getElementById("close-word-panel").addEventListener("click", () => {
-    wordPanel.classList.remove("show");
-  });
-
-  isVocabMode = true;
-}
+export default renderReaderMode;

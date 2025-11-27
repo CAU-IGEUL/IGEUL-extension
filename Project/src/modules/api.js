@@ -76,3 +76,25 @@ export async function getSimplificationReport(jobId, idToken) {
     throw error;
   }
 }
+
+export async function requestDictionaryApi(paragraphs, idToken) {
+  return fetch(`${BASE_URL}/dictionaryApi`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${idToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ paragraphs })
+  }).then(r => r.json());
+}
+
+
+export async function getDictionaryResult(jobId, idToken) {
+  return fetch(`${BASE_URL}/dictionaryApi?jobId=${jobId}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${idToken}`
+    }
+  }).then(r => r.json());
+}
+
