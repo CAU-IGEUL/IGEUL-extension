@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "permissions": ["scripting", "activeTab", "storage", "identity"],
   "oauth2": {
-    "client_id": "119171161159-g4k78h0g1huerp15hmbhais35saelngg.apps.googleusercontent.com",
+    "client_id": "119171161159-utk39q8k1g5n9id3id2c71u5fj124hvq.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile"
@@ -16,13 +16,12 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js","profileOverlay.js"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
@@ -37,6 +36,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://*.firebaseio.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://us-central1-igeul-66a16.cloudfunctions.net;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://*.firebaseio.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com;"
   }
 }

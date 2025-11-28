@@ -6,7 +6,6 @@ module.exports = {
   entry: {
     background: './src/background.js',
     content: './src/content.js',
-    profileOverlay: './profileOverlay.js',
     toggleToolbar: './src/toggleToolbar.js',
     popup: './popup.js'
   },

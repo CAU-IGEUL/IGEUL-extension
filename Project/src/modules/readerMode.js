@@ -4,8 +4,6 @@ import { loadFonts, initFontController } from './changeTextStyle.js';
 import { initReadingGuide } from './readingGuide.js';
 import { getToolbarHTML } from '../styles/toolbarHTML.js';
 import { applyToolbarStyles } from '../styles/toolbarCSS.js';
-import { initSummary } from './summary.js';
-import { initProfileSettings } from './profileSettings.js';
 
 export function renderReaderMode(dto) {
   document.body.innerHTML = "";
@@ -67,8 +65,6 @@ export function renderReaderMode(dto) {
 
   initFontController();
   initReadingGuide();
-  initSummary();
-  initProfileSettings();
 
   const container = document.createElement("div");
   container.id = "focus-reader";
