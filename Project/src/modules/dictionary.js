@@ -13,7 +13,20 @@ let originalHtmlBackup = "";  // 🔥 원본 HTML 저장
 // ===================================================================================
 export async function initDictionaryAnalysis(paragraphs) {
   try {
-    const { idToken } = await chrome.storage.local.get("idToken");
+    
+    const idToken = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ action: 'getAuthToken' }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        if (response && response.token) {
+          resolve(response.token);
+        } else {
+          reject(new Error('인증 토큰을 가져올 수 없습니다.'));
+        }
+      });
+    });
 
     // 서버에서 요구하는 형태 그대로 보냄
     console.log("📤 Dictionary 요청 Body:", paragraphs);

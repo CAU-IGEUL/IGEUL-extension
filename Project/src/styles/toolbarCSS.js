@@ -942,6 +942,137 @@ export function applyToolbarStyles() {
     #profile-toggle.active svg {
       stroke: white;
     }
+
+
+    /* ===================================
+       더 읽을 콘텐츠 토글 스위치
+    =================================== */
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #10b981;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:not(:checked) + .toggle-slider {
+      background-color: #d1d5db;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .recommendations-section {
+      margin-top: 60px;
+      padding: 32px 0;
+      border-top: 2px solid #e5e7eb;
+    }
+
+    .recommendations-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 24px;
+      color: #1f2937;
+    }
+
+    .recommendations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .recommendation-card {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      background: white;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .recommendation-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border-color: #3b82f6;
+    }
+
+    .recommendation-image {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: #f3f4f6;
+    }
+
+    .recommendation-content {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .recommendation-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1f2937;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .recommendation-snippet {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .recommendation-link {
+      font-size: 12px;
+      color: #3b82f6;
+      margin-top: 12px;
+      word-break: break-all;
+    }
   `;
   return style;
 }

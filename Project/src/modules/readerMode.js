@@ -14,6 +14,7 @@ import {
 import { initSimplifyFeature } from "./simplify.js"; // 🔥 새로 추가된 부분
 import { initSummary } from './summary.js';
 import { initProfileSettings } from './profileSettings.js';
+import { initReadingRecommendations } from './readingRecommendations.js';
 
 
 /* -------------------------------------------------------
@@ -124,6 +125,7 @@ export function renderReaderMode(dto) {
   initReadingGuide();
   initSummary();
   initProfileSettings();
+  initReadingRecommendations();
 
 
   /* -------------------------------------------------------
