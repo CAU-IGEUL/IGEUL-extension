@@ -4,7 +4,6 @@ import { loadFonts, initFontController } from './changeTextStyle.js';
 import { initReadingGuide } from './readingGuide.js';
 import { getToolbarHTML } from '../styles/toolbarHTML.js';
 import { applyToolbarStyles } from '../styles/toolbarCSS.js';
-import { requestSimplifyText, getSimplificationReport } from "./api.js";
 import {
   dictionaryData,
   vocabMode,
@@ -12,41 +11,22 @@ import {
   wrapWordsInTextNodes,
   attachDictionaryEvents
 } from "./dictionary.js";
+import { initSimplifyFeature } from "./simplify.js"; // 🔥 새로 추가된 부분
+import { initSummary } from './summary.js';
+import { initProfileSettings } from './profileSettings.js';
+
 
 /* -------------------------------------------------------
    메인 함수
 ------------------------------------------------------- */
 export function renderReaderMode(dto) {
-  /* -------- 문장 순화 로딩창 -------- */
-  function showSimplifyLoading() {
-    let loader = document.getElementById("simplify-loading");
-    if (!loader) {
-      loader = document.createElement("div");
-      loader.id = "simplify-loading";
-      loader.innerHTML = `
-        <div class="loading-backdrop"></div>
-        <div class="loading-box">
-          <div class="loader"></div>
-          <p>문장 순화 중입니다...</p>
-        </div>
-      `;
-      document.body.appendChild(loader);
-    }
-    loader.style.display = "flex";
-  }
-
-  function hideSimplifyLoading() {
-    const loader = document.getElementById("simplify-loading");
-    if (loader) loader.style.display = "none";
-  }
-
+  
   /* -------- 기본 초기화 -------- */
   document.body.innerHTML = "";
 
   // 순화/리포트 상태
-  let originalParagraphs = [];     // 텍스트 문단 원본 배열 (이미지 제외)
-  let simplifiedParagraphs = [];   // 서버에서 받은 순화 문단 배열 (텍스트 문단 기준)
-  let lastJobId = null;            // 리포트 조회용 jobId
+  let originalParagraphs = [];     // 텍스트 문단 원본 배열
+  let simplifiedParagraphs = [];   // 서버에서 받은 순화 문단 배열
   let currentMode = "original";    // original | simplified | compare
 
   loadFonts();
@@ -104,24 +84,6 @@ export function renderReaderMode(dto) {
     simplifyPanel.classList.toggle("show");
   });
 
-  // 보기 모드 라디오 이벤트
-  const originRadio = document.getElementById("origin-only");
-  const simplifiedRadio = document.getElementById("simplified-only");
-  const compareRadio = document.getElementById("compare-view");
-
-  originRadio?.addEventListener("change", () => {
-    currentMode = "original";
-    renderParagraphs();
-  });
-  simplifiedRadio?.addEventListener("change", () => {
-    currentMode = "simplified";
-    renderParagraphs();
-  });
-  compareRadio?.addEventListener("change", () => {
-    currentMode = "compare";
-    renderParagraphs();
-  });
-
   /* -------------------------------------------------------
      📘 리딩 가이드 & 설정 패널
   ------------------------------------------------------- */
@@ -160,6 +122,9 @@ export function renderReaderMode(dto) {
 
   initFontController();
   initReadingGuide();
+  initSummary();
+  initProfileSettings();
+
 
   /* -------------------------------------------------------
      📄 본문 영역 생성 (이미지 + 텍스트)
@@ -180,111 +145,45 @@ export function renderReaderMode(dto) {
   `;
   document.body.appendChild(container);
 
+
   /* -------------------------------------------------------
      🔥 원문 문단 배열 구성 (텍스트 문단만)
-     - 서버로 보내는 문단 기준이 됨
+     - simplify.js로 넘겨줄 originalParagraphs
   ------------------------------------------------------- */
   const textParagraphs = dto.paragraphs.filter(p => p.type === "text");
   originalParagraphs = textParagraphs.map(p => (p.content || "").trim());
 
-  // 단어장 분석용 문단 (텍스트만)
-  const dictionaryParagraphs = dto.paragraphs
-    .filter(p => p.type === "text")
-    .map((p, idx) => ({
-      id: idx + 1,
-      text: p.content
-    }));
-  // 🔍 단어장 분석 초기화 (서버 연동용)
+  /* -------------------------------------------------------
+     🔍 단어장 분석 초기화
+  ------------------------------------------------------- */
+  const dictionaryParagraphs = textParagraphs.map((p, idx) => ({
+    id: idx + 1,
+    text: p.content
+  }));
   initDictionaryAnalysis(dictionaryParagraphs);
 
+
   /* -------------------------------------------------------
-     🪄 문장 순화 실행
+     🪄 문장 순화 기능 등록 (simplify.js)
   ------------------------------------------------------- */
-  document.getElementById("run-simplify")?.addEventListener("click", async () => {
-    console.log("🪄 문장 순화 요청됨");
-    showSimplifyLoading();
+  initSimplifyFeature({
+    dto,
+    originalParagraphs,
 
-    try {
-      const { idToken } = await chrome.storage.local.get("idToken");
-      if (!idToken) {
-        alert("로그인 정보가 없습니다. 먼저 로그인 후 다시 시도해주세요.");
-        console.error("❌ idToken 없음");
-        return;
-      }
-
-      // 서버에 보낼 문단 구조
-      const paragraphsForAPI = originalParagraphs.map((text, idx) => ({
-        id: idx + 1,
-        text
-      }));
-
-      const res = await requestSimplifyText(dto.title, paragraphsForAPI, idToken);
-      console.log("✨ 문장 순화 API 응답:", res);
-
-      lastJobId = res.jobId;
-
-      if (res.data && Array.isArray(res.data.simplified_paragraphs)) {
-        // id 순서대로 정렬 후 텍스트만 배열로
-        const sorted = [...res.data.simplified_paragraphs].sort((a, b) => a.id - b.id);
-        simplifiedParagraphs = sorted.map(p => p.text || "");
-      } else {
-        console.warn("응답에 simplified_paragraphs가 없습니다:", res);
-        simplifiedParagraphs = [];
-      }
-
-      currentMode = "simplified";
+    onUpdateSimplified: (newTexts) => {
+      simplifiedParagraphs = newTexts;
       renderParagraphs();
+    },
 
-    } catch (err) {
-      console.error("❌ 문장 순화 실패:", err);
-      alert("문장 순화 중 오류가 발생했습니다.");
-    } finally {
-      hideSimplifyLoading();
+    onModeChange: (mode) => {
+      currentMode = mode;
+      renderParagraphs();
     }
   });
 
-  /* -------------------------------------------------------
-     📊 리포트 조회
-  ------------------------------------------------------- */
-  document.getElementById("report-view")?.addEventListener("click", async () => {
-    if (!lastJobId) {
-      alert("먼저 문장 순화를 실행해주세요.");
-      return;
-    }
-
-    try {
-      const { idToken } = await chrome.storage.local.get("idToken");
-      if (!idToken) {
-        alert("로그인 정보가 없습니다. 먼저 로그인 후 다시 시도해주세요.");
-        console.error("❌ idToken 없음 (리포트 조회)");
-        return;
-      }
-
-      const report = await getSimplificationReport(lastJobId, idToken);
-      console.log("📊 리포트 결과:", report);
-
-      if (report.status === "processing") {
-        alert("리포트가 아직 생성 중입니다. 잠시 후 다시 시도해주세요.");
-        return;
-      }
-
-      if (report.status === "completed" && report.analysis) {
-        openReportModal(report.analysis);
-      } else {
-        alert("리포트 데이터가 올바르지 않습니다.");
-        console.warn("예상치 못한 리포트 응답:", report);
-      }
-
-    } catch (e) {
-      console.error("❌ 리포트 조회 실패:", e);
-      alert("리포트 조회 중 오류가 발생했습니다.");
-    }
-  });
 
   /* -------------------------------------------------------
      🔥 문단 렌더링 함수
-     - dto.paragraphs 순서를 기준으로
-     - 이미지 유지 + 텍스트만 순화/비교
   ------------------------------------------------------- */
   function renderParagraphs() {
     const contentBox = document.querySelector(".focus-content");
@@ -298,31 +197,26 @@ export function renderReaderMode(dto) {
         if (p.type === "image") {
           html += `<img src="${p.content}" alt="image" class="focus-image">`;
         } else {
-          const orig = (p.content || "").replace(/\n/g, "<br>");
-          html += `<p>${orig}</p>`;
+          html += `<p>${(p.content || "").replace(/\n/g, "<br>")}</p>`;
         }
       });
     }
 
     /* 2) 순화된 문장만 보기 */
     else if (currentMode === "simplified") {
-      // 🔹 원본 이미지들은 그대로 한 번 쭉 보여주고
       dto.paragraphs.forEach(p => {
         if (p.type === "image") {
           html += `<img src="${p.content}" alt="image" class="focus-image">`;
         }
       });
 
-      // 🔹 그 아래에 서버에서 받은 순화 문단 전체를 순서대로 전부 출력
       simplifiedParagraphs.forEach(text => {
-        const simp = (text || "").replace(/\n/g, "<br>");
-        html += `<p>${simp}</p>`;
+        html += `<p>${(text || "").replace(/\n/g, "<br>")}</p>`;
       });
     }
 
-    /* 3) 원문 같이 보기 (비교 모드) */
+    /* 3) 비교 모드 */
     else if (currentMode === "compare") {
-      // 왼쪽: 원본 기사 전체 (텍스트 + 이미지)
       let origHtml = "";
       dto.paragraphs.forEach(p => {
         if (p.type === "image") {
@@ -332,7 +226,6 @@ export function renderReaderMode(dto) {
         }
       });
 
-      // 오른쪽: 순화 텍스트 전체 (이미지는 서버가 모르니까 텍스트만)
       let simpHtml = "";
       simplifiedParagraphs.forEach(text => {
         simpHtml += `<p>${(text || "").replace(/\n/g, "<br>")}</p>`;
@@ -348,76 +241,32 @@ export function renderReaderMode(dto) {
 
     contentBox.innerHTML = html;
 
-    // 📘 단어장 모드가 켜져 있으면 다시 하이라이트 적용
+    // 📘 단어장 모드 적용
     if (vocabMode) {
       const target = document.querySelector(".focus-content");
-      if (target && dictionaryData) {
-        wrapWordsInTextNodes(target, dictionaryData);
-        attachDictionaryEvents(dictionaryData);
-      }
+      wrapWordsInTextNodes(target, dictionaryData);
+      attachDictionaryEvents(dictionaryData);
     }
   }
 
 
   /* -------------------------------------------------------
-     📊 리포트 모달 UI
+     ❌ Exit 버튼
   ------------------------------------------------------- */
-  function openReportModal(analysis) {
-    const modal = document.createElement("div");
-    modal.style.position = "fixed";
-    modal.style.top = "0";
-    modal.style.left = "0";
-    modal.style.right = "0";
-    modal.style.bottom = "0";
-    modal.style.background = "rgba(0,0,0,0.45)";
-    modal.style.zIndex = "99999999";
-    modal.style.display = "flex";
-    modal.style.justifyContent = "center";
-    modal.style.alignItems = "center";
+  exitBtn?.addEventListener("click", () => {
+    const content = document.querySelector(".focus-content");
+    if (content) {
+      content.style.animation = "fadeOut 0.4s ease forwards";
+      setTimeout(() => location.reload(), 400);
+    } else {
+      location.reload();
+    }
+  });
 
-    const summary = analysis.summary || {};
 
-    modal.innerHTML = `
-      <div style="
-        background:white;
-        padding:24px 28px;
-        border-radius:12px;
-        width:420px;
-        max-height:70vh;
-        overflow-y:auto;
-        box-shadow:0 10px 30px rgba(0,0,0,0.18);
-        font-family:'Noto Sans KR', sans-serif;
-      ">
-        <h2 style="margin-top:0; margin-bottom:16px; font-size:20px;">문장 순화 리포트</h2>
-
-        <p><strong>가독성 향상:</strong> ${summary.readability_improvement_percent ?? "-"}%</p>
-        <p><strong>문자 수 감소:</strong> ${summary.char_count_reduction_percent ?? "-"}%</p>
-
-        <p style="margin-top:12px;"><strong>핵심 메시지:</strong></p>
-        <p style="font-size:14px; color:#374151;">
-          ${summary.key_message ?? "서버에서 전달된 핵심 메시지가 없습니다."}
-        </p>
-
-        <div style="text-align:right; margin-top:18px;">
-          <button id="close-report-modal" style="
-            padding:8px 14px;
-            background:#ef4444;
-            color:white;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-            font-size:14px;
-          ">닫기</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-    document.getElementById("close-report-modal")?.addEventListener("click", () => modal.remove());
-  }
 
   /* -------------------------------------------------------
-     📚 리더모드 스타일
+     📚 스타일 (통째로 유지)
   ------------------------------------------------------- */
   const readerStyle = document.createElement("style");
   readerStyle.textContent = `
@@ -430,7 +279,6 @@ export function renderReaderMode(dto) {
     }
 
     .focus-content {
-      max-width: 720px;
       background: white;
       margin: 120px auto 60px;
       padding: 60px;
@@ -656,20 +504,8 @@ export function renderReaderMode(dto) {
       to { transform: rotate(360deg); }
     }
   `;
+  
   document.head.appendChild(readerStyle);
-
-  /* -------------------------------------------------------
-     ❌ Exit 버튼
-  ------------------------------------------------------- */
-  exitBtn?.addEventListener("click", () => {
-    const content = document.querySelector(".focus-content");
-    if (content) {
-      content.style.animation = "fadeOut 0.4s ease forwards";
-      setTimeout(() => location.reload(), 400);
-    } else {
-      location.reload();
-    }
-  });
-} // renderReaderMode 끝
+}
 
 export default renderReaderMode;
