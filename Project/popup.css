@@ -1,22 +1,37 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   margin: 0;
-  padding: 16px;
+  padding: 0;
   background-color: #f9f9f9;
-  width: 250px;
+  width: 350px;
   text-align: center;
+  min-height: 300px;
+}
+
+/* 처음 프로필 설정 모드: 팝업을 크게 */
+body.initial-profile-setup {
+  width: 350px;
+  min-height: 600px;
+  background-color: white;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  padding: 16px;
 }
 
 h1 {
   font-size: 20px;
   margin: 0 0 4px 0;
   color: #333;
+}
+
+/* 처음 설정 모드일 때 제목 스타일 */
+body.initial-profile-setup h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
 }
 
 p {
@@ -30,7 +45,7 @@ p {
   align-items: center;
   margin-bottom: 10px;
   padding: 8px;
-  background-color: #e8f0fe; /* Light blue background */
+  background-color: #e8f0fe;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
@@ -53,15 +68,221 @@ p {
   color: #666;
 }
 
+/* ===================================
+   프로필 선택 영역
+=================================== */
+#profile-selection {
+  background-color: white;
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 10px;
+  max-height: none;
+  overflow-y: visible;
+}
+
+body.initial-profile-setup #profile-selection {
+  max-height: none;
+  box-shadow: none;
+}
+
+#profile-selection h3 {
+  background: white;
+  z-index: 10;
+  padding: 12px 12px 8px 12px;
+  margin: 0 0 8px 0;
+}
+
+.profile-section {
+  margin-bottom: 16px;
+  text-align: left;
+  padding: 0 12px;
+}
+
+.profile-section:last-of-type {
+  margin-bottom: 12px;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 12px;
+  display: block;
+  line-height: 1.4;
+}
+
+/* ===================================
+   슬라이더 컨테이너
+=================================== */
+.slider-container {
+  width: 100%;
+  padding: 10px 0;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0 5px;
+}
+
+.slider-labels span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+  flex: 1;
+}
+
+.slider-track {
+  position: relative;
+  padding: 10px 0;
+}
+
+.level-slider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #e0e0e0 0%, #e0e0e0 100%);
+  outline: none;
+  border-radius: 2px;
+  position: relative;
+  z-index: 2;
+}
+
+.level-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #4285F4;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+}
+
+.level-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 6px rgba(66, 133, 244, 0.4);
+}
+
+.level-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #4285F4;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+}
+
+.level-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 6px rgba(66, 133, 244, 0.4);
+}
+
+.slider-indicators {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.slider-dot {
+  width: 12px;
+  height: 12px;
+  background-color: #e0e0e0;
+  border-radius: 50%;
+  border: 2px solid white;
+  transition: all 0.2s;
+}
+
+.slider-dot.active {
+  background-color: #4285F4;
+  transform: scale(1.3);
+}
+
+.slider-descriptions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 5px;
+}
+
+.slider-descriptions span {
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+  flex: 1;
+}
+
+/* ===================================
+   태그 그룹 (학습 분야)
+=================================== */
+.tag-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.tag-label {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background-color: #f0f0f0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+}
+
+.tag-label input[type="checkbox"] {
+  display: none;
+}
+
+.tag-label:hover {
+  background-color: #e0e0e0;
+}
+
+.tag-label input[type="checkbox"]:checked + span {
+  font-weight: 600;
+  color: white;
+}
+
+.tag-label:has(input[type="checkbox"]:checked) {
+  background-color: #4285F4;
+  color: white;
+}
+
+/* ===================================
+   일반 버튼 스타일
+=================================== */
 .btn {
   padding: 12px;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
   width: 100%;
+  margin-bottom: 8px;
+}
+
+.btn:last-child {
+  margin-bottom: 0;
 }
 
 .login-btn {
@@ -73,8 +294,17 @@ p {
   background-color: #357ae8;
 }
 
+.profile-btn {
+  background-color: #34a853;
+  color: white;
+}
+
+.profile-btn:hover {
+  background-color: #2d8e47;
+}
+
 .logout-btn {
-  background-color: #dc3545; /* Red for logout */
+  background-color: #dc3545;
   color: white;
 }
 
@@ -89,4 +319,16 @@ p {
 
 .extract-btn:hover {
   background-color: #d5d5d5;
+}
+
+.save-btn {
+  background-color: #4285F4;
+  color: white;
+  margin: 12px;
+  margin-top: 8px;
+  width: calc(100% - 24px);
+}
+
+.save-btn:hover {
+  background-color: #357ae8;
 }

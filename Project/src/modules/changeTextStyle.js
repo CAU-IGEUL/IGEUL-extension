@@ -44,7 +44,7 @@ export function initFontController() {
   let currentSize = 100;
   let currentLineHeight = 1.5;
   let currentLetterSpacing = 0;
-  let currentWidth = 100;
+  let currentWidth = 720;
   let currentAlign = 'left';
   let currentFont = 'default';
 
@@ -67,9 +67,9 @@ export function initFontController() {
       }
       
       /* 본문 컨테이너 */
-      article, main, .content, #content {
-        width: ${currentWidth}% !important;
-        max-width: 720px !important;
+      article, main, .content, #content, .focus-content {
+        width: ${currentWidth}px !important;
+        max-width: none !important;
         margin: 0 auto !important;
         padding: 60px 40px !important;
         background: white !important;
@@ -129,10 +129,26 @@ export function initFontController() {
 
   // 🎚 너비 슬라이더
   document.getElementById('width-slider')?.addEventListener('input', (e) => {
-    currentWidth = e.target.value;
+    const percent = Number(e.target.value);  // 50~120
+
+    const sliderMin = 50;
+    const sliderMax = 120;
+
+    // 0~1 비율로 정규화
+    const ratio = (percent - sliderMin) / (sliderMax - sliderMin);
+
+    const minWidth = 300;
+    const maxWidth = 960;
+
+    // 실제 width(px)
+    currentWidth = minWidth + ratio * (maxWidth - minWidth);
+
     updateStyles();
-    document.getElementById('width-value').textContent = `${currentWidth}%`;
-  });
+
+    // UI에는 퍼센트 그대로 표시
+    document.getElementById('width-value').textContent = `${percent}%`;
+});
+
 
   // ✏️ 폰트 변경
   document.getElementById('font-select')?.addEventListener('change', (e) => {

@@ -52,11 +52,10 @@ export function extractParagraphsInOrder(area) {
   let id = 1;
   let buffer = "";
   const MINLEN = 3;
-  const bad = /(광고|배너|구독|추천|Copyright|무단|재배포)/i;
 
   const pushText = (txt) => {
     const text = txt.trim();
-    if (text.length >= MINLEN && !bad.test(text))
+    if (text.length >= MINLEN)
       result.push({ id: id++, type: "text", content: text });
   };
 
