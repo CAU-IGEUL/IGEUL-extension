@@ -1,4 +1,5 @@
 // src/modules/readingRecommendations.js
+import { apiService } from './api.js';
 
 const API_BASE_URL = 'https://us-central1-igeul-66a16.cloudfunctions.net';
 
@@ -22,17 +23,33 @@ export function initReadingRecommendations() {
 =================================== */
 function setupToggleListener() {
   const toggle = document.getElementById('recommendations-toggle');
-  console.log('🔍 토글 요소 찾기:', toggle);  // 👈 이게 null이면 문제
-  
   if (toggle) {
-    toggle.addEventListener('change', (e) => {
-      console.log('🔄 토글 상태 변경:', e.target.checked);  // 👈 이게 안 찍히면 문제
+    toggle.addEventListener('change', async (e) => {
+      const isEnabled = e.target.checked;
       const section = document.getElementById('recommendations-section');
-      console.log('🔍 섹션 찾기:', section);  // 👈 이게 null이면 문제
       
+      console.log(`Recommendation toggle changed to: ${isEnabled}`);
+      
+      try {
+        // Call the new API to update the setting
+        await apiService.updateRecommendationSettings(isEnabled);
+        console.log(`Successfully updated recommendation setting to ${isEnabled}`);
+      } catch (error) {
+        console.error('Failed to update recommendation setting:', error);
+        // Revert the toggle on failure to reflect the actual state
+        e.target.checked = !isEnabled;
+        alert('설정 변경에 실패했습니다. 다시 시도해주세요.');
+        return; // Stop further execution
+      }
+
+      // Hide or show the section based on the new state
       if (section) {
-        section.style.display = e.target.checked ? 'block' : 'none';
-        console.log('✅ display 변경:', section.style.display);
+        section.style.display = isEnabled ? 'block' : 'none';
+      }
+      
+      // If user toggles it on, and there are no recommendations, fetch them.
+      if (isEnabled && (!section || section.children.length === 1)) { // children.length === 1 because of h2 title
+         await loadRecommendations();
       }
     });
   }
@@ -121,7 +138,28 @@ async function fetchRecommendations(paragraphs) {
    추천 콘텐츠 로드 및 표시
 =================================== */
 async function loadRecommendations() {
+  const recommendationsSection = document.getElementById('recommendations-section');
+  const toggle = document.getElementById('recommendations-toggle');
+
   try {
+    // Get user profile to check the setting
+    const profile = await apiService._getFromLocalStorage();
+    const shouldFetch = profile?.getRecommendations !== false;
+
+    // Sync toggle state with profile setting
+    if (toggle) {
+      toggle.checked = shouldFetch;
+    }
+    
+    // If the setting is false, ensure the section is hidden and stop.
+    if (!shouldFetch) {
+      console.log('User has disabled reading recommendations.');
+      if (recommendationsSection) {
+        recommendationsSection.style.display = 'none';
+      }
+      return;
+    }
+
     // 본문 가져오기
     const paragraphs = getCurrentPageContent();
     
@@ -137,10 +175,18 @@ async function loadRecommendations() {
       displayRecommendations(result.recommendations);
     } else {
       console.log('추천 콘텐츠가 없습니다.');
+      // If no recommendations are returned, hide the section.
+      if (recommendationsSection) {
+        recommendationsSection.style.display = 'none';
+      }
     }
     
   } catch (error) {
     console.error('❌ 추천 콘텐츠 로드 오류:', error);
+    // On error, hide the section.
+    if (recommendationsSection) {
+        recommendationsSection.style.display = 'none';
+    }
   }
 }
 
@@ -149,7 +195,7 @@ async function loadRecommendations() {
 =================================== */
 function displayRecommendations(recommendations) {
   // 기존 추천 섹션 제거
-  const existingSection = document.getElementById('recommendations-section');
+  let existingSection = document.getElementById('recommendations-section');
   if (existingSection) {
     existingSection.remove();
   }

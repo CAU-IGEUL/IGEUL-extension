@@ -35,7 +35,8 @@ class ApiService {
     return {
       sentence: apiProfile.readingProfile.sentence,
       vocabulary: apiProfile.readingProfile.vocabulary,
-      knownTopics: apiProfile.knownTopics || []
+      knownTopics: apiProfile.knownTopics || [],
+      getRecommendations: apiProfile.getRecommendations !== undefined ? apiProfile.getRecommendations : true
     };
   }
 
@@ -87,6 +88,39 @@ class ApiService {
 
   async updateProfile(profileData) {
     return this.saveProfile(profileData);
+  }
+
+  async updateRecommendationSettings(getRecommendations) {
+    try {
+      const token = await this.getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/updateRecommendationSettings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ getRecommendations: getRecommendations })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Recommendation settings update failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Also update the local profile to keep it in sync
+      const localProfile = await this._getFromLocalStorage();
+      if (localProfile) {
+        localProfile.getRecommendations = getRecommendations;
+        await this._saveToLocalStorage(localProfile);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error updating recommendation settings:', error);
+      throw error;
+    }
   }
 
   // [수정 3] 프로필 조회 (endpoint: /getUserProfile)
