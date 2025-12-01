@@ -1,6 +1,6 @@
 // src/modules/simplify.js
 
-import { requestSimplifyText, getSimplificationReport } from "./api.js";
+import { requestSimplifyText, getSimplificationReport, apiService } from "./api.js";
 
 /**
  * 문장 순화 전체 기능을 담당하는 초기화 함수
@@ -9,6 +9,7 @@ import { requestSimplifyText, getSimplificationReport } from "./api.js";
 export function initSimplifyFeature({
   dto,
   originalParagraphs,
+  splitCounts,
   onUpdateSimplified,
   onModeChange
 }) {
@@ -47,7 +48,7 @@ export function initSimplifyFeature({
     showSimplifyLoading();
 
     try {
-      const { idToken } = await chrome.storage.local.get("idToken");
+      const idToken = await apiService.getAuthToken();
       if (!idToken) {
         alert("로그인 정보가 없습니다. 먼저 로그인해주세요.");
         return;
@@ -69,6 +70,8 @@ export function initSimplifyFeature({
           .sort((a, b) => a.id - b.id)
           .map(p => p.text || "");
       }
+      
+      newTexts = rebuildSimplifiedParagraphs(newTexts, splitCounts);
 
       onUpdateSimplified(newTexts);
       onModeChange("simplified");
@@ -182,3 +185,29 @@ export function initSimplifyFeature({
     document.getElementById("close-report-modal")?.addEventListener("click", () => modal.remove());
   }
 }
+
+export function splitParagraphs(text) {
+  return (text || "")
+    .split(/\n\s*\n/)
+    .map(p => p.trim())
+    .filter(Boolean);
+}
+
+export function rebuildSimplifiedParagraphs(simplifiedList, splitCounts) {
+  let idx = 0;
+  let rebuilt = [];
+
+  splitCounts.forEach(count => {
+    if (count === null) {
+      rebuilt.push(null);  // 이미지 자리
+    } else {
+      const group = simplifiedList.slice(idx, idx + count);
+      idx += count;
+      rebuilt.push(group.join("\n\n"));
+    }
+  });
+
+  return rebuilt;
+}
+
+

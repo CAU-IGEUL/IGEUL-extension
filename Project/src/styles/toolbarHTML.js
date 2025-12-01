@@ -36,7 +36,15 @@ export function getToolbarHTML() {
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </button>
-      </div>
+      
+          <div class="recommendations-toggle-container" style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
+            <span style="font-size: 12px; color: #6b7280;">더 읽을 콘텐츠</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="recommendations-toggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+      </div> 
 
       <div class="right-btns">
         <button id="extract-btn" class="action-btn">📄 본문 추출</button>

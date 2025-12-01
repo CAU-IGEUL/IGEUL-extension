@@ -11,9 +11,10 @@ import {
   wrapWordsInTextNodes,
   attachDictionaryEvents
 } from "./dictionary.js";
-import { initSimplifyFeature } from "./simplify.js"; // 🔥 새로 추가된 부분
+import { initSimplifyFeature, splitParagraphs} from "./simplify.js"; // 🔥 새로 추가된 부분
 import { initSummary } from './summary.js';
 import { initProfileSettings } from './profileSettings.js';
+import { initReadingRecommendations } from './readingRecommendations.js';
 
 
 /* -------------------------------------------------------
@@ -124,6 +125,7 @@ export function renderReaderMode(dto) {
   initReadingGuide();
   initSummary();
   initProfileSettings();
+  initReadingRecommendations();
 
 
   /* -------------------------------------------------------
@@ -151,7 +153,15 @@ export function renderReaderMode(dto) {
      - simplify.js로 넘겨줄 originalParagraphs
   ------------------------------------------------------- */
   const textParagraphs = dto.paragraphs.filter(p => p.type === "text");
-  originalParagraphs = textParagraphs.map(p => (p.content || "").trim());
+  originalParagraphs = textParagraphs.flatMap(p =>
+    splitParagraphs(p.content || "")
+  );
+
+  let splitCounts = [];
+  dto.paragraphs.forEach(p => {
+    if (p.type === "image") splitCounts.push(null);
+    else splitCounts.push(splitParagraphs(p.content || "").length);
+  });
 
   /* -------------------------------------------------------
      🔍 단어장 분석 초기화
@@ -169,6 +179,7 @@ export function renderReaderMode(dto) {
   initSimplifyFeature({
     dto,
     originalParagraphs,
+    splitCounts,
 
     onUpdateSimplified: (newTexts) => {
       simplifiedParagraphs = newTexts;
@@ -203,40 +214,81 @@ export function renderReaderMode(dto) {
     }
 
     /* 2) 순화된 문장만 보기 */
+    
     else if (currentMode === "simplified") {
-      dto.paragraphs.forEach(p => {
+
+      html += `<div class="simplified-only-container">`;
+
+      dto.paragraphs.forEach((p, i) => {
+
+        // 이미지 문단 → 그대로 표시
         if (p.type === "image") {
-          html += `<img src="${p.content}" alt="image" class="focus-image">`;
+          html += `
+            <div class="simplified-image-row">
+              <img src="${p.content}" class="simplified-image">
+            </div>
+          `;
+          return;
         }
+
+        // 텍스트 문단 → 순화된 문장만 출력
+        const simp = simplifiedParagraphs[i] || "-순화문 없음-";
+
+        html += `
+          <div class="simplified-text-row">
+            ${simp.replace(/\n/g, "<br>")}
+          </div>
+        `;
       });
 
-      simplifiedParagraphs.forEach(text => {
-        html += `<p>${(text || "").replace(/\n/g, "<br>")}</p>`;
-      });
+      html += `</div>`;
     }
 
     /* 3) 비교 모드 */
     else if (currentMode === "compare") {
-      let origHtml = "";
-      dto.paragraphs.forEach(p => {
+
+      console.group("[COMPARE MODE - SIMPLE] 디버깅 로그");
+
+      console.log("📌 원문 문단(dto.paragraphs) 전체:", dto.paragraphs);
+      console.log("📌 순화문 배열(simplifiedParagraphs):", simplifiedParagraphs);
+      console.log("📌 순화문 문단 수:", simplifiedParagraphs.length);
+
+      html += `<div class="compare-container">`;
+
+
+      dto.paragraphs.forEach((p, i) => {
+
+        // 이미지 문단 → 한 줄 중앙 배치 + 순서 유지
         if (p.type === "image") {
-          origHtml += `<img src="${p.content}" alt="image" class="focus-image">`;
-        } else {
-          origHtml += `<p>${(p.content || "").replace(/\n/g, "<br>")}</p>`;
+          console.log("🖼 이미지 문단 → 비교 생략");
+          console.groupEnd();
+          html += `
+            <div class="compare-image-row">
+              <img src="${p.content}" class="compare-image">
+            </div>
+          `;
+          return;
         }
+
+        // 텍스트 문단 → 좌/우 비교 박스
+        const orig = p.content || "";
+        const simp = simplifiedParagraphs[i] || "-순화문 없음-";
+
+        console.log("📝 원문:", orig);
+        console.log("✨ 순화문:", simp);
+        html += `
+          <div class="compare-row">
+            <div class="compare-cell compare-left">
+              ${orig.replace(/\n/g, "<br>")}
+            </div>
+            <div class="compare-cell compare-right">
+              ${simp.replace(/\n/g, "<br>")}
+            </div>
+          </div>
+        `;
       });
 
-      let simpHtml = "";
-      simplifiedParagraphs.forEach(text => {
-        simpHtml += `<p>${(text || "").replace(/\n/g, "<br>")}</p>`;
-      });
-
-      html += `
-        <div class="compare-block">
-          <div class="compare-original">${origHtml}</div>
-          <div class="compare-simplified">${simpHtml}</div>
-        </div>
-      `;
+      html += `</div>`;
     }
 
     contentBox.innerHTML = html;
@@ -310,23 +362,44 @@ export function renderReaderMode(dto) {
       border-radius: 8px;
     }
 
-    /* Compare UI */
-    .compare-block {
+    /* compare 전체 컨테이너 */
+    .compare-container {
       display: flex;
-      gap: 20px;
-      padding: 12px 0;
+      flex-direction: column;
+      gap: 26px;
+      margin-top: 28px;
     }
-    .compare-original,
-    .compare-simplified {
-      flex: 1;
-      padding: 12px 14px;
-      background: #fafafa;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-      font-size: 16px;
-      line-height: 1.6;
-      white-space: normal;
+
+    /* 문단 비교 row: 좌/우 2컬럼 */
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
     }
+
+    /* 텍스트 박스 스타일 */
+    .compare-box {
+      background: #ffffff;
+      border: 1.5px solid #d4d4d8;
+      border-radius: 12px;
+      padding: 16px 18px;
+      line-height: 1.7;
+      font-size: 17px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    /* 이미지가 나올 때 (한 줄, 중앙 배치) */
+    .compare-image-row {
+      display: flex;
+      justify-content: center;
+    }
+
+    .compare-image {
+      max-width: 80%;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+    }
+
 
     /* Fade animations */
     @keyframes fadeIn {
@@ -385,20 +458,7 @@ export function renderReaderMode(dto) {
       font-size: 15px;
       cursor: pointer;
     }
-
-    /* 단어장 하이라이트 */
-    .highlight-word {
-      background: none;
-      color: #111;
-      border-bottom: 2px solid #facc15;
-      transition: border-color 0.2s, transform 0.15s;
-      cursor: pointer;
-    }
-    .highlight-word:hover {
-      border-color: #f59e0b;
-      transform: scale(1.05);
-    }
-
+      
     /* 단어 뜻 패널 */
     #word-meaning-panel {
       position: fixed;
