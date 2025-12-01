@@ -24,6 +24,14 @@ export function getToolbarHTML() {
               </select>
             </div>
             <div class="setting-item">
+              <span class="setting-label">Text Color</span>
+              <input type="color" id="text-color-picker" value="#222222">
+            </div>
+            <div class="setting-item">
+              <span class="setting-label">Background Color</span>
+              <input type="color" id="bg-color-picker" value="#FFFFFF">
+            </div>
+            <div class="setting-item">
               <span class="setting-label">Text Size</span>
               <input type="range" id="size-slider" min="50" max="150" value="100" step="1">
               <span id="size-value">100%</span>

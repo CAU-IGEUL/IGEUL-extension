@@ -94,34 +94,37 @@ export function renderReaderMode(dto) {
   document.body.appendChild(readingGuide);
 
   // 모든 드롭다운 컨테이너에 대해 이벤트 리스너 설정
-  document.querySelectorAll('.dropdown-container').forEach(container => {
-    const button = container.querySelector('button');
-    const menu = container.querySelector('.dropdown-menu');
-    
-    button.addEventListener('click', (e) => {
-      e.stopPropagation();
-      // 현재 드롭다운 상태
-      const isVisible = menu.style.display === 'block';
-      
-      // 모든 드롭다운 닫기
-      document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-      document.querySelectorAll('.dropdown-container > button').forEach(b => b.classList.remove('active'));
+  document.addEventListener('click', e => {
+    const button = e.target.closest('.dropdown-container > button');
 
-      // 현재 클릭한 드롭다운의 상태를 반전
-      if (!isVisible) {
-        menu.style.display = 'block';
-        button.classList.add('active');
-      }
-    });
-  });
+    // Case 1: A dropdown button was clicked
+    if (button) {
+        const menu = button.nextElementSibling;
+        if (!menu || !menu.classList.contains('dropdown-menu')) return;
 
-  // 문서 전체를 클릭했을 때 드롭다운 닫기
-  window.addEventListener('click', (e) => {
-    // 드롭다운 메뉴 자신이 아닌 다른 곳을 클릭했을 때
-    if (!e.target.closest('.dropdown-menu')) {
-      document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-      document.querySelectorAll('.dropdown-container > button').forEach(b => b.classList.remove('active'));
+        const isVisible = menu.style.display === 'block';
+
+        // Close all menus first
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+        document.querySelectorAll('.dropdown-container > button').forEach(b => b.classList.remove('active'));
+
+        // If the clicked menu was closed, open it
+        if (!isVisible) {
+            menu.style.display = 'block';
+            button.classList.add('active');
+        }
+        return; // Stop further processing for this click
     }
+
+    // Case 2: The click was not on a button. Check if it was inside a menu.
+    if (e.target.closest('.dropdown-menu')) {
+        // Click was inside a menu, so do nothing.
+        return;
+    }
+
+    // Case 3: The click was outside buttons and menus. Close everything.
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('.dropdown-container > button').forEach(b => b.classList.remove('active'));
   });
 
 

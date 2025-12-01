@@ -47,6 +47,9 @@ export function initFontController() {
   let currentWidth = 720;
   let currentAlign = 'left';
   let currentFont = 'default';
+  let currentTextColor = '#222222';
+  let currentContentBgColor = '#FFFFFF';
+
 
   // 폰트 스타일 엘리먼트 생성
   const fontStyleElement = document.createElement('style');
@@ -72,26 +75,26 @@ export function initFontController() {
         max-width: none !important;
         margin: 0 auto !important;
         padding: 60px 40px !important;
-        background: white !important;
+        background: ${currentContentBgColor} !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
       }
       
       /* 텍스트 기본값 */
-      * {
+      .focus-content * {
         font-family: ${selectedFont} !important;
         font-size: ${baseFontSize}px !important;
         line-height: ${currentLineHeight} !important;
         letter-spacing: ${currentLetterSpacing}px !important;
         text-align: ${currentAlign} !important;
-        color: #222 !important;
+        color: ${currentTextColor} !important;
       }
 
       /* 제목 크기 */
-      h1 { font-size: ${baseFontSize * 1.75}px !important; margin: 1.5em 0 0.5em !important; }
-      h2 { font-size: ${baseFontSize * 1.5}px !important; margin: 1.3em 0 0.5em !important; }
-      h3 { font-size: ${baseFontSize * 1.25}px !important; margin: 1.2em 0 0.5em !important; }
+      .focus-content h1 { font-size: ${baseFontSize * 1.75}px !important; margin: 1.5em 0 0.5em !important; }
+      .focus-content h2 { font-size: ${baseFontSize * 1.5}px !important; margin: 1.3em 0 0.5em !important; }
+      .focus-content h3 { font-size: ${baseFontSize * 1.25}px !important; margin: 1.2em 0 0.5em !important; }
 
-      p { margin-bottom: 1em !important; }
+      .focus-content p { margin-bottom: 1em !important; }
 
       /* 툴바 제외 */
       #custom-toolbar, #custom-toolbar * {
@@ -153,6 +156,18 @@ export function initFontController() {
   // ✏️ 폰트 변경
   document.getElementById('font-select')?.addEventListener('change', (e) => {
     currentFont = e.target.value;
+    updateStyles();
+  });
+
+  // 🎨 텍스트 색상 변경
+  document.getElementById('text-color-picker')?.addEventListener('input', (e) => {
+    currentTextColor = e.target.value;
+    updateStyles();
+  });
+
+  // 🎨 배경 색상 변경
+  document.getElementById('bg-color-picker')?.addEventListener('input', (e) => {
+    currentContentBgColor = e.target.value;
     updateStyles();
   });
 
