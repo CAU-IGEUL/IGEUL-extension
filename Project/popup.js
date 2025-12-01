@@ -301,7 +301,16 @@ profileBtn.addEventListener('click', async () => {
   extractBtn.addEventListener('click', async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab) {
-      chrome.tabs.sendMessage(tab.id, { action: 'extractContent' });
+      chrome.tabs.sendMessage(tab.id, { action: 'extractContent' }, (response) => {
+        // Optional: Check response before closing, though closing immediately is fine for this request
+        if (chrome.runtime.lastError) {
+          console.error("Error sending message to content script:", chrome.runtime.lastError);
+        }
+        window.close(); // Close the popup window
+      });
+    } else {
+      console.warn("No active tab found to send message to.");
+      window.close(); // Close even if no tab found, as there's nothing else to do.
     }
   });
 });

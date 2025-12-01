@@ -31,12 +31,39 @@ export function applyToolbarStyles() {
     .toolbar-buttons {
       display: flex;
       gap: 10px;
+      align-items: center;
     }
 
     .right-btns {
       display: flex;
       gap: 8px;
     }
+
+    /* ===================================
+       드롭다운 메뉴
+    =================================== */
+    .dropdown-container {
+      position: relative;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: white !important; /* Added !important */
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 1000;
+      padding: 20px;
+      width: 400px;
+      display: none;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
 
     /* ===================================
        버튼 스타일
@@ -50,6 +77,11 @@ export function applyToolbarStyles() {
       display: inline-flex;
       align-items: center;
       transition: all 0.2s;
+    }
+
+    #edit-icon.active, #reading-guide-toggle.active {
+      background: #e5e7eb;
+      border-color: #d1d5db;
     }
 
     #edit-icon:hover, #reading-guide-toggle:hover, #summary-toggle:hover, #profile-toggle:hover {
@@ -80,28 +112,20 @@ export function applyToolbarStyles() {
     }
 
     /* ===================================
-       설정 패널
+       설정 패널 (드롭다운 메뉴 내부)
     =================================== */
-    #settings-panel {
-      margin-top: 15px;
-      padding: 15px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .setting-item {
+    .setting-item, .guide-setting-item {
       display: flex;
       align-items: center;
       gap: 15px;
       margin-bottom: 12px;
     }
 
-    .setting-item:last-child {
+    .setting-item:last-child, .guide-setting-item:last-child {
       margin-bottom: 0;
     }
 
-    .setting-label {
+    .setting-label, .guide-label {
       font-size: 14px;
       color: #374151;
       font-weight: 500;
@@ -111,19 +135,24 @@ export function applyToolbarStyles() {
     /* ===================================
        슬라이더 스타일
     =================================== */
-    #size-slider, #lineheight-slider, #letterspacing-slider, #width-slider {
+    #size-slider, #lineheight-slider, #letterspacing-slider, #width-slider,
+    #guide-height-slider, #guide-position-slider, #guide-opacity-slider {
       flex: 1;
       height: 6px;
       background: #e5e7eb;
       border-radius: 3px;
       outline: none;
       -webkit-appearance: none;
+      margin: 0;
     }
 
     #size-slider::-webkit-slider-thumb,
     #lineheight-slider::-webkit-slider-thumb,
     #letterspacing-slider::-webkit-slider-thumb,
-    #width-slider::-webkit-slider-thumb {
+    #width-slider::-webkit-slider-thumb,
+    #guide-height-slider::-webkit-slider-thumb,
+    #guide-position-slider::-webkit-slider-thumb,
+    #guide-opacity-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
       width: 18px;
@@ -137,7 +166,10 @@ export function applyToolbarStyles() {
     #size-slider::-moz-range-thumb,
     #lineheight-slider::-moz-range-thumb,
     #letterspacing-slider::-moz-range-thumb,
-    #width-slider::-moz-range-thumb {
+    #width-slider::-moz-range-thumb,
+    #guide-height-slider::-moz-range-thumb,
+    #guide-position-slider::-moz-range-thumb,
+    #guide-opacity-slider::-moz-range-thumb {
       width: 18px;
       height: 18px;
       background: #3b82f6;
@@ -146,8 +178,18 @@ export function applyToolbarStyles() {
       border: none;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
+    
+    #guide-opacity-slider {
+       background: linear-gradient(to right, transparent, currentColor);
+    }
+    #guide-opacity-slider::-webkit-slider-thumb,
+    #guide-opacity-slider::-moz-range-thumb {
+        background: #111827;
+    }
 
-    #size-value, #lineheight-value, #letterspacing-value, #width-value {
+
+    #size-value, #lineheight-value, #letterspacing-value, #width-value,
+    #guide-height-value, #guide-position-value, #guide-opacity-value {
       font-size: 14px;
       color: #374151;
       font-weight: 600;
@@ -215,29 +257,18 @@ export function applyToolbarStyles() {
        body 패딩
     =================================== */
     body {
-      padding-top: 70px !important;
+      padding-top: 60px !important; /* 고정값으로 변경 */
+      transition: none; /* 패딩 변경 애니메이션 제거 */
     }
 
     /* ===================================
        리딩 가이드 패널
     =================================== */
-    #guide-panel {
-      margin-top: 15px;
-      padding: 20px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-    }
-
     .guide-setting-item {
       display: flex;
       align-items: center;
       gap: 15px;
       margin-bottom: 12px;
-    }
-
-    .guide-setting-item:last-child {
-      margin-bottom: 0;
     }
 
     /* ===================================
@@ -265,13 +296,6 @@ export function applyToolbarStyles() {
     /* ===================================
        가이드 라벨 & 컨트롤
     =================================== */
-    .guide-label {
-      font-size: 14px;
-      color: #374151;
-      font-weight: 500;
-      min-width: 100px;
-    }
-
     #guide-color-picker {
       flex: 1;
       height: 40px;
@@ -288,97 +312,7 @@ export function applyToolbarStyles() {
       border: none;
       border-radius: 4px;
     }
-
-    /* ===================================
-       가이드 슬라이더
-    =================================== */
-    #guide-opacity-slider {
-      flex: 1;
-      height: 6px;
-      background: linear-gradient(to right, transparent, currentColor);
-      border-radius: 3px;
-      outline: none;
-      -webkit-appearance: none;
-      margin-bottom: 10px;
-    }
-
-    #guide-opacity-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      background: #111827;
-      cursor: pointer;
-      border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    #guide-opacity-slider::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      background: #111827;
-      cursor: pointer;
-      border-radius: 50%;
-      border: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    #guide-opacity-value {
-      font-size: 14px;
-      color: #374151;
-      font-weight: 600;
-      min-width: 50px;
-    }
-
-    #reading-guide-toggle.active {
-      background: #3b82f6;
-      border-color: #3b82f6;
-    }
-
-    #reading-guide-toggle.active svg {
-      stroke: white;
-    }
-
-    #guide-height-slider, #guide-position-slider {
-      flex: 1;
-      height: 6px;
-      background: #e5e7eb;
-      border-radius: 3px;
-      outline: none;
-      -webkit-appearance: none;
-      margin-bottom: 10px;
-    }
-
-    #guide-height-slider::-webkit-slider-thumb,
-    #guide-position-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      background: #111827;
-      cursor: pointer;
-      border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    #guide-height-slider::-moz-range-thumb,
-    #guide-position-slider::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      background: #111827;
-      cursor: pointer;
-      border-radius: 50%;
-      border: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    #guide-height-value, #guide-position-value {
-      font-size: 14px;
-      color: #374151;
-      font-weight: 600;
-      min-width: 50px;
-    }
-
+    
     .guide-hint {
       font-size: 12px;
       color: #6b7280;

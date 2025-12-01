@@ -86,40 +86,44 @@ export function renderReaderMode(dto) {
   });
 
   /* -------------------------------------------------------
-     📘 리딩 가이드 & 설정 패널
+     📘 드롭다운 메뉴 로직
   ------------------------------------------------------- */
   const readingGuide = document.createElement('div');
   readingGuide.id = 'reading-guide';
   readingGuide.style.display = 'none';
   document.body.appendChild(readingGuide);
 
-  document.getElementById('edit-icon')?.addEventListener('click', () => {
-    const panel = document.getElementById('settings-panel');
-    if (panel.style.display === 'none') {
-      panel.style.display = 'block';
-      document.body.style.paddingTop = '270px';
-    } else {
-      panel.style.display = 'none';
-      document.body.style.paddingTop = '70px';
+  // 모든 드롭다운 컨테이너에 대해 이벤트 리스너 설정
+  document.querySelectorAll('.dropdown-container').forEach(container => {
+    const button = container.querySelector('button');
+    const menu = container.querySelector('.dropdown-menu');
+    
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // 현재 드롭다운 상태
+      const isVisible = menu.style.display === 'block';
+      
+      // 모든 드롭다운 닫기
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+      document.querySelectorAll('.dropdown-container > button').forEach(b => b.classList.remove('active'));
+
+      // 현재 클릭한 드롭다운의 상태를 반전
+      if (!isVisible) {
+        menu.style.display = 'block';
+        button.classList.add('active');
+      }
+    });
+  });
+
+  // 문서 전체를 클릭했을 때 드롭다운 닫기
+  window.addEventListener('click', (e) => {
+    // 드롭다운 메뉴 자신이 아닌 다른 곳을 클릭했을 때
+    if (!e.target.closest('.dropdown-menu')) {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+      document.querySelectorAll('.dropdown-container > button').forEach(b => b.classList.remove('active'));
     }
   });
 
-  document.getElementById('reading-guide-toggle')?.addEventListener('click', () => {
-    const guidePanel = document.getElementById('guide-panel');
-    const settingsPanel = document.getElementById('settings-panel');
-    const toggleBtn = document.getElementById('reading-guide-toggle');
-
-    if (guidePanel.style.display === 'none') {
-      guidePanel.style.display = 'block';
-      settingsPanel.style.display = 'none';
-      toggleBtn.classList.add('active');
-      document.body.style.paddingTop = '270px';
-    } else {
-      guidePanel.style.display = 'none';
-      toggleBtn.classList.remove('active');
-      document.body.style.paddingTop = '70px';
-    }
-  });
 
   initFontController();
   initReadingGuide();
