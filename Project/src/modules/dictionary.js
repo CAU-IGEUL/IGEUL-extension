@@ -1,19 +1,60 @@
 // src/modules/dictionary.js
 
-import { requestDictionaryApi, getDictionaryResult } from "./api.js";
+import { requestDictionaryApi, getDictionaryResult } from "./api.js"; // Keep requestDictionaryApi import for now if needed elsewhere or for future uncommenting
 
 // 전역 상태
 let dictionaryData = [];
 let tooltipEl = null;
-let vocabMode = false;        // 🔥 단어장 모드 ON/OFF
-let originalHtmlBackup = "";  // 🔥 원본 HTML 저장
+let toastEl = null; // 🍞 Toast Element
+let vocabMode = false;
+let originalHtmlBackup = "";
+let vocabToggleInitialized = false; // 🔥 Listener guard
+
+// ===================================================================================
+// 🍞 Toast UI
+// ===================================================================================
+function showToast(message) {
+  console.log('Toast should show:', message); // For debugging
+  if (!toastEl) {
+    toastEl = document.createElement('div');
+    toastEl.id = 'igeul-toast';
+    // Styling
+    toastEl.style.position = 'fixed';
+    toastEl.style.bottom = '30px';
+    toastEl.style.left = '50%';
+    toastEl.style.transform = 'translateX(-50%)';
+    toastEl.style.background = 'rgba(17, 17, 17, 0.85)'; // #111 with opacity
+    toastEl.style.color = 'white';
+    toastEl.style.padding = '12px 24px';
+    toastEl.style.borderRadius = '8px';
+    toastEl.style.zIndex = '999999999999';
+    toastEl.style.fontSize = '14px';
+    toastEl.style.fontFamily = 'sans-serif';
+    toastEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    toastEl.style.transition = 'opacity 0.3s, bottom 0.3s';
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = message;
+  toastEl.style.display = 'block';
+  toastEl.style.opacity = '1';
+}
+
+function hideToast() {
+  if (toastEl) {
+    toastEl.style.opacity = '0';
+    // Transition이 끝난 후 숨기기
+    setTimeout(() => {
+      if (toastEl) toastEl.style.display = 'none';
+    }, 300);
+  }
+}
+
 
 // ===================================================================================
 // 📌 ReaderMode에서 호출할 초기화 함수 (단어장 모드 OFF 상태로 시작)
 // ===================================================================================
 export async function initDictionaryAnalysis(paragraphs) {
   try {
-    
     const idToken = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({ action: 'getAuthToken' }, (response) => {
         if (chrome.runtime.lastError) {
@@ -33,21 +74,28 @@ export async function initDictionaryAnalysis(paragraphs) {
 
     const res = await requestDictionaryApi(paragraphs, idToken);
 
-    console.log("📩 Dictionary API 응답:", res);   // ⭐ 복구한 부분
+    console.log("📩 Dictionary API 응답:", res);
+
+    // FIX 1: Show toast immediately if processing
+    if (res.status === 'processing') {
+      showToast("사전 생성 중...");
+    }
 
     const jobId = res.jobId;
     if (!jobId) {
       console.error("Dictionary jobId 없음. 응답:", res);
+      hideToast();
       return;
     }
 
     dictionaryData = await pollDictionaryResult(jobId, idToken);
 
-    console.log("📘 Dictionary Data 완료:", dictionaryData);  // ⭐ 데이터 확인
+    console.log("📘 Dictionary Data 완료:", dictionaryData);
 
     initVocabToggle();
   } catch (err) {
     console.error("❌ Dictionary API 실패:", err);
+    hideToast(); // 🍞 실패 시 토스트 숨기기
   }
 }
 
@@ -60,16 +108,27 @@ export async function initDictionaryAnalysis(paragraphs) {
 function pollDictionaryResult(jobId, idToken) {
   return new Promise((resolve, reject) => {
     const interval = setInterval(async () => {
-      const result = await getDictionaryResult(jobId, idToken);
-      console.log("⏳ [Dictionary Polling]", result.status);
-
-      if (result.status === "completed") {
+      try {
+        const result = await getDictionaryResult(jobId, idToken);
+        console.log("⏳ [Dictionary Polling]", result.status);
+  
+        if (result.status === "completed") {
+          clearInterval(interval);
+          hideToast();
+          resolve(result.data);
+        } else if (result.status === "processing") {
+          showToast("사전 생성 중...");
+        } else if (result.status === "failed") {
+          clearInterval(interval);
+          hideToast();
+          console.error("Dictionary job failed:", result.error);
+          reject(new Error(result.error || "사전 생성에 실패했습니다."));
+        }
+      } catch (err) {
         clearInterval(interval);
-        resolve(result.data);
-      }
-      if (result.status === "failed") {
-        clearInterval(interval);
-        reject(result.error);
+        hideToast();
+        console.error("Error during dictionary polling:", err);
+        reject(err);
       }
     }, 3000);
   });
@@ -80,6 +139,9 @@ function pollDictionaryResult(jobId, idToken) {
 // 📌 단어장 모드 토글 (버튼으로 ON/OFF 가능)
 // ===================================================================================
 function initVocabToggle() {
+  if (vocabToggleInitialized) return; // FIX 2: Guard against multiple listeners
+  vocabToggleInitialized = true;
+
   const btn = document.getElementById("vocab-btn");
   const content = document.querySelector(".focus-content");
 
@@ -121,13 +183,17 @@ function initVocabToggle() {
     } else {
       console.log("📘 단어장 모드 OFF");
       content.innerHTML = originalHtmlBackup;
+      const panel = document.getElementById("word-meaning-panel");
+      if (panel) {
+        panel.remove(); // FIX 3: More forceful removal
+      }
     }
   });
 }
 
 
 // ===================================================================================
-// 📌 텍스트 노드들만 단어 감싸기 — A 방식 (부분 매칭 허용)
+// 📌 텍스트 노드들만 단어 감싸기 — 중복 매칭 방지
 // ===================================================================================
 function wrapWordsInTextNodes(root, dictionaryData) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -142,30 +208,50 @@ function wrapWordsInTextNodes(root, dictionaryData) {
 
   nodes.forEach(textNode => {
     const parent = textNode.parentNode;
+    // 스킵 로직 추가: 부모가 H1 태그이며 focus-title 클래스를 가지면 건너뜀
+    if (parent && parent.nodeName === 'H1' && parent.classList.contains('focus-title')) {
+      return;
+    }
+    // dictionary-word 클래스를 가진 요소의 자식 텍스트 노드는 건너뛰기
+    // 이전에 중복으로 SPAN이 생성되는 것을 방지합니다.
+    if (parent && parent.nodeName === 'SPAN' && parent.classList.contains('dictionary-word')) {
+      return;
+    }
+    
     let text = textNode.nodeValue;
+    
+    let replacements = {};
+    let counter = 0;
 
+    // 긴 단어부터 짧은 단어 순으로 처리하여 중복 매칭 방지
     sortedDict.forEach(item => {
       const word = item.term;
       if (!word || word.trim() === "") return;
 
-      // Regex escape only
       const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedWord, "gi");
 
-      // A 방식: 부분 매칭 허용
-      const regex = new RegExp(escapedWord, "g");
-
+      // Replace with a unique placeholder
       text = text.replace(regex, match => {
-        return `<span class="dictionary-word" data-term="${match}">${match}</span>`;
+        const key = `__DICT_WORD_${counter++}__`;
+        replacements[key] = `<span class="dictionary-word" data-term="${item.term}">${match}</span>`;
+        return key;
       });
     });
 
+    // Replace placeholders with actual span tags
+    for (const key in replacements) {
+      text = text.replace(key, replacements[key]);
+    }
+
     if (text !== textNode.nodeValue) {
-      const temp = document.createElement("span");
+      const temp = document.createElement("div"); // Use div to safely contain potential multiple top-level elements
       temp.innerHTML = text;
 
-      parent.replaceChild(temp, textNode);
-      while (temp.firstChild) parent.insertBefore(temp.firstChild, temp);
-      parent.removeChild(temp);
+      while (temp.firstChild) {
+        parent.insertBefore(temp.firstChild, textNode);
+      }
+      parent.removeChild(textNode);
     }
   });
 }
@@ -175,6 +261,7 @@ function wrapWordsInTextNodes(root, dictionaryData) {
 // 📌 Tooltip 생성
 // ===================================================================================
 function createTooltip() {
+  if (tooltipEl) return; // 이미 생성되었으면 반환
   tooltipEl = document.createElement("div");
   tooltipEl.id = "dict-tooltip";
   tooltipEl.style.position = "fixed";
@@ -198,6 +285,7 @@ function createTooltip() {
 // 📌 Tooltip 표시/숨기기
 // ===================================================================================
 function showTooltip(event, text) {
+  if (!tooltipEl) createTooltip();
   tooltipEl.innerText = text;
 
   tooltipEl.style.left = event.clientX + 12 + "px";
@@ -206,7 +294,9 @@ function showTooltip(event, text) {
 }
 
 function hideTooltip() {
-  tooltipEl.style.display = "none";
+  if(tooltipEl) {
+    tooltipEl.style.display = "none";
+  }
 }
 
 
@@ -217,9 +307,17 @@ function openWordPanel(item) {
   let panel = document.getElementById("word-meaning-panel");
 
   const html = `
-    <h3>${item.term}</h3>
-    <p>${item.longDefinition}</p>
-    ${item.imageUrl ? `<img class="dict-image" src="${item.imageUrl}">` : ""}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3 style="margin: 0; font-size: 20px;">${item.term}</h3>
+      <span style="background-color: #eee; color: #333; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+        ${item.tag}
+      </span>
+    </div>
+    <p style="font-size: 14px; color: #555; margin-top: 0; margin-bottom: 16px; font-style: italic;">
+      "${item.shortDefinition}"
+    </p>
+    <p style="font-size: 15px; line-height: 1.6;">${item.longDefinition}</p>
+    ${item.imageUrl ? `<img class="dict-image" src="${item.imageUrl}" style="margin-top: 16px;">` : ""}
   `;
 
   if (!panel) {
@@ -250,6 +348,10 @@ function openWordPanel(item) {
 // ===================================================================================
 function attachDictionaryEvents(dictionaryData) {
   document.querySelectorAll(".dictionary-word").forEach(el => {
+    // Prevent multiple listeners
+    if (el.dataset.eventsAttached) return;
+    el.dataset.eventsAttached = 'true';
+
     const term = el.dataset.term;
     const item = dictionaryData.find(d => d.term === term);
     if (!item) return;
@@ -276,5 +378,3 @@ function updateVocabButtonUI(btn, isOn) {
 
 export { wrapWordsInTextNodes, attachDictionaryEvents, createTooltip };
 export { dictionaryData, vocabMode };
-
-

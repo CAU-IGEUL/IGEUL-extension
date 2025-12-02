@@ -523,6 +523,7 @@ export function renderReaderMode(dto) {
 
     .dictionary-word {
       cursor: pointer !important;
+      font-weight: bold;
     }
 
     /* 순화 로딩창 */
