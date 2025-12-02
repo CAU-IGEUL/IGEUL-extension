@@ -299,12 +299,18 @@ profileBtn.addEventListener('click', async () => {
 
   // Extract button click
   extractBtn.addEventListener('click', async () => {
+    // 버튼 비활성화 및 텍스트 변경
+    extractBtn.disabled = true;
+    extractBtn.textContent = '추출 중...';
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab) {
       chrome.tabs.sendMessage(tab.id, { action: 'extractContent' }, (response) => {
-        // Optional: Check response before closing, though closing immediately is fine for this request
         if (chrome.runtime.lastError) {
           console.error("Error sending message to content script:", chrome.runtime.lastError);
+          // 에러 발생 시 버튼 활성화 및 텍스트 복원
+          extractBtn.disabled = false;
+          extractBtn.textContent = '📄 본문 추출';
         }
         window.close(); // Close the popup window
       });

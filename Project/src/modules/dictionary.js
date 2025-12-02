@@ -4,6 +4,7 @@ import { requestDictionaryApi, getDictionaryResult } from "./api.js"; // Keep re
 
 // 전역 상태
 let dictionaryData = [];
+let dictionaryJobId = null; // To hold the job ID
 let tooltipEl = null;
 let toastEl = null; // 🍞 Toast Element
 let vocabMode = false;
@@ -13,7 +14,7 @@ let vocabToggleInitialized = false; // 🔥 Listener guard
 // ===================================================================================
 // 🍞 Toast UI
 // ===================================================================================
-function showToast(message) {
+function showToast(message, temporary = false, duration = 2700) {
   console.log('Toast should show:', message); // For debugging
   if (!toastEl) {
     toastEl = document.createElement('div');
@@ -37,6 +38,17 @@ function showToast(message) {
   toastEl.textContent = message;
   toastEl.style.display = 'block';
   toastEl.style.opacity = '1';
+
+  // Clear any existing timer to avoid premature hiding
+  if (toastEl.timer) {
+    clearTimeout(toastEl.timer);
+  }
+
+  if (temporary) {
+    toastEl.timer = setTimeout(() => {
+      hideToast();
+    }, duration);
+  }
 }
 
 function hideToast() {
@@ -76,19 +88,19 @@ export async function initDictionaryAnalysis(paragraphs) {
 
     console.log("📩 Dictionary API 응답:", res);
 
-    // FIX 1: Show toast immediately if processing
+    dictionaryJobId = res.jobId; // Store job ID
+
     if (res.status === 'processing') {
-      showToast("사전 생성 중...");
+      showToast("사전 생성 중...", true);
     }
 
-    const jobId = res.jobId;
-    if (!jobId) {
+    if (!dictionaryJobId) {
       console.error("Dictionary jobId 없음. 응답:", res);
       hideToast();
       return;
     }
 
-    dictionaryData = await pollDictionaryResult(jobId, idToken);
+    dictionaryData = await pollDictionaryResult(dictionaryJobId, idToken);
 
     console.log("📘 Dictionary Data 완료:", dictionaryData);
 
@@ -116,14 +128,13 @@ function pollDictionaryResult(jobId, idToken) {
           clearInterval(interval);
           hideToast();
           resolve(result.data);
-        } else if (result.status === "processing") {
-          showToast("사전 생성 중...");
         } else if (result.status === "failed") {
           clearInterval(interval);
           hideToast();
           console.error("Dictionary job failed:", result.error);
           reject(new Error(result.error || "사전 생성에 실패했습니다."));
         }
+        // No more toast spam during polling
       } catch (err) {
         clearInterval(interval);
         hideToast();
@@ -148,44 +159,77 @@ function initVocabToggle() {
   if (!btn || !content) return;
 
   btn.addEventListener("click", async () => {
-    vocabMode = !vocabMode;
+    const turningOn = !vocabMode;
+    vocabMode = turningOn; // Optimistically update state
     updateVocabButtonUI(btn, vocabMode);
 
-    if (vocabMode) {
-      console.log("📘 단어장 모드 ON");
+    if (turningOn) {
+      console.log("📘 단어장 모드 ON 시도");
 
-      if (!dictionaryData || dictionaryData.length === 0) {
-        console.log("📘 사전 데이터 없음 → 초기 paragraphs 재사용");
+      // Helper function to activate UI
+      const activateVocabUI = () => {
+        if (!originalHtmlBackup) {
+          originalHtmlBackup = content.innerHTML;
+        }
+        wrapWordsInTextNodes(content, dictionaryData);
+        createTooltip();
+        attachDictionaryEvents(dictionaryData);
+      };
 
-        const paragraphs = Array.from(document.querySelectorAll(".focus-content p"))
-          .map((p, idx) => ({
-            id: idx + 1,
-            text: p.innerText.trim()
-          }))
-          .filter(p => p.text !== "");
-
-        const { idToken } = await chrome.storage.local.get("idToken");
-
-        const res = await requestDictionaryApi({ paragraphs }, idToken);
-        const jobId = res.jobId;
-        dictionaryData = await pollDictionaryResult(jobId, idToken);
+      // 1. If data is already available, just use it.
+      if (dictionaryData && dictionaryData.length > 0) {
+        console.log("📘 데이터 있음. 단어장 활성화.");
+        activateVocabUI();
+        return;
       }
 
+      // 2. If data is not available, check the job status.
+      if (dictionaryJobId) {
+        console.log("📘 데이터 없음. Job ID로 상태 확인:", dictionaryJobId);
+        try {
+          const idToken = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: 'getAuthToken' }, (response) => {
+              if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+              else if (response && response.token) resolve(response.token);
+              else reject(new Error('인증 토큰을 가져올 수 없습니다.'));
+            });
+          });
+          const result = await getDictionaryResult(dictionaryJobId, idToken);
 
-      if (!originalHtmlBackup) {
-        originalHtmlBackup = content.innerHTML;
+          if (result.status === 'completed') {
+            console.log("📘 사전 데이터 확인 완료. 단어장 활성화.");
+            dictionaryData = result.data;
+            activateVocabUI();
+          } else if (result.status === 'processing') {
+            showToast("사전이 아직 생성 중입니다.", true);
+            // Revert the toggle
+            vocabMode = false;
+            updateVocabButtonUI(btn, vocabMode);
+          } else { // failed or other status
+            showToast("사전 생성에 실패했습니다.", true);
+            vocabMode = false;
+            updateVocabButtonUI(btn, vocabMode);
+          }
+        } catch (error) {
+            console.error("사전 확인 중 오류:", error);
+            showToast("사전 확인 중 오류가 발생했습니다.", true);
+            vocabMode = false;
+            updateVocabButtonUI(btn, vocabMode);
+        }
+      } else {
+        // 3. No job ID exists, something went wrong initially.
+        showToast("사전 분석 정보가 없습니다.", true);
+        vocabMode = false;
+        updateVocabButtonUI(btn, vocabMode);
       }
-
-      wrapWordsInTextNodes(content, dictionaryData);
-      createTooltip();
-      attachDictionaryEvents(dictionaryData);
-
-    } else {
+    } else { // Turning OFF
       console.log("📘 단어장 모드 OFF");
-      content.innerHTML = originalHtmlBackup;
+      if (originalHtmlBackup) {
+        content.innerHTML = originalHtmlBackup;
+      }
       const panel = document.getElementById("word-meaning-panel");
       if (panel) {
-        panel.remove(); // FIX 3: More forceful removal
+        panel.remove();
       }
     }
   });
