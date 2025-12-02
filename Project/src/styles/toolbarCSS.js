@@ -89,8 +89,8 @@ export function applyToolbarStyles() {
     }
 
     #summary-toggle.active {
-      background: #3b82f6;
-      border-color: #3b82f6;
+      background: #FF8D21; /* Changed color */
+      border-color: #FF8D21; /* Changed color */
     }
 
     #summary-toggle.active svg {
@@ -157,7 +157,7 @@ export function applyToolbarStyles() {
       appearance: none;
       width: 18px;
       height: 18px;
-      background: #3b82f6;
+      background: #FF8D21; /* Changed color */
       cursor: pointer;
       border-radius: 50%;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -172,7 +172,7 @@ export function applyToolbarStyles() {
     #guide-opacity-slider::-moz-range-thumb {
       width: 18px;
       height: 18px;
-      background: #3b82f6;
+      background: #FF8D21; /* Changed color */
       cursor: pointer;
       border-radius: 50%;
       border: none;
@@ -221,8 +221,8 @@ export function applyToolbarStyles() {
     }
 
     .align-btn.active {
-      background: #3b82f6;
-      border-color: #3b82f6;
+      background: #FF8D21; /* Changed color */
+      border-color: #FF8D21; /* Changed color */
       color: white;
     }
 
@@ -245,12 +245,12 @@ export function applyToolbarStyles() {
     }
 
     .font-dropdown:hover {
-      border-color: #3b82f6;
+      border-color: #FF8D21; /* Changed color */
     }
 
     .font-dropdown:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      border-color: #FF8D21; /* Changed color */
+      box-shadow: 0 0 0 3px rgba(255, 141, 33, 0.1); /* Changed color */
     }
 
     /* ===================================
@@ -435,7 +435,7 @@ export function applyToolbarStyles() {
       width: 48px;
       height: 48px;
       border: 4px solid #e5e7eb;
-      border-top-color: #3b82f6;
+      border-top-color: #FF8D21; /* Changed color */
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 16px;
@@ -485,7 +485,7 @@ export function applyToolbarStyles() {
     }
 
     .summary-retry-btn {
-      background: #3b82f6;
+      background: #FF8D21; /* Changed color */
       color: white;
       border: none;
       padding: 10px 24px;
@@ -497,7 +497,7 @@ export function applyToolbarStyles() {
     }
 
     .summary-retry-btn:hover {
-      background: #2563eb;
+      background: #E87A13; /* Changed color */
     }
 
     /* ===================================
@@ -589,7 +589,7 @@ export function applyToolbarStyles() {
       width: 48px;
       height: 48px;
       border: 4px solid #e5e7eb;
-      border-top-color: #4285F4;
+      border-top-color: #FF8D21; /* Changed color */
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 16px;
@@ -685,7 +685,7 @@ export function applyToolbarStyles() {
       appearance: none;
       width: 24px;
       height: 24px;
-      background: #4285F4;
+      background: #FF8D21; /* Changed color */
       cursor: pointer;
       border-radius: 50%;
       border: 4px solid white;
@@ -695,13 +695,13 @@ export function applyToolbarStyles() {
 
     .profile-level-slider::-webkit-slider-thumb:hover {
       transform: scale(1.15);
-      box-shadow: 0 3px 6px rgba(66, 133, 244, 0.4);
+      box-shadow: 0 3px 6px rgba(255, 141, 33, 0.4); /* Changed color */
     }
 
     .profile-level-slider::-moz-range-thumb {
       width: 20px;
       height: 20px;
-      background: #4285F4;
+      background: #FF8D21; /* Changed color */
       cursor: pointer;
       border-radius: 50%;
       border: 3px solid white;
@@ -732,7 +732,7 @@ export function applyToolbarStyles() {
     }
 
     .profile-slider-dot.active {
-      background-color: #4285F4;
+      background-color: #FF8D21; /* Changed color */
       transform: scale(1.2);
     }
 
@@ -805,15 +805,15 @@ export function applyToolbarStyles() {
     }
 
     .profile-tag-label:has(input[type="checkbox"]:checked) {
-      background-color: #4285F4;
+      background-color: #FF8D21; /* Changed color */
       color: white;
-      border-color: #4285F4;
-      box-shadow: 0 2px 6px rgba(66, 133, 244, 0.3);
+      border-color: #FF8D21; /* Changed color */
+      box-shadow: 0 2px 6px rgba(255, 141, 33, 0.3); /* Changed color */
     }
 
     /* 저장 버튼 */
     .profile-save-btn {
-      background: #4285F4;
+      background: #FF8D21; /* Changed color */
       color: white;
       border: none;
       padding: 16px 24px;
@@ -824,7 +824,7 @@ export function applyToolbarStyles() {
       transition: all 0.2s;
       width: 100%;
       margin-top: 12px;
-      box-shadow: 0 2px 8px rgba(66, 133, 244, 0.25);
+      box-shadow: 0 2px 8px rgba(255, 141, 33, 0.25); /* Changed color */
       display: flex; /* ← 추가 */
       align-items: center; /* ← 추가 */
       justify-content: center; /* ← 추가 */
@@ -832,9 +832,9 @@ export function applyToolbarStyles() {
     }
 
     .profile-save-btn:hover {
-      background: #357ae8;
+      background: #E87A13; /* Changed color */
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(66, 133, 244, 0.35);
+      box-shadow: 0 4px 12px rgba(255, 141, 33, 0.35); /* Changed color */
     }
 
     .profile-save-btn:active {
@@ -869,8 +869,8 @@ export function applyToolbarStyles() {
     }
 
     #profile-toggle.active {
-      background: #4285F4;
-      border-color: #4285F4;
+      background: #FF8D21; /* Changed color */
+      border-color: #FF8D21; /* Changed color */
     }
 
     #profile-toggle.active svg {
@@ -902,7 +902,7 @@ export function applyToolbarStyles() {
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #10b981;
+      background-color: #10b981; /* Default green, can be changed */
       transition: 0.3s;
       border-radius: 24px;
     }
@@ -961,7 +961,7 @@ export function applyToolbarStyles() {
     .recommendation-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      border-color: #3b82f6;
+      border-color: #FF8D21; /* Changed color */
     }
 
     .recommendation-image {
@@ -1003,7 +1003,7 @@ export function applyToolbarStyles() {
 
     .recommendation-link {
       font-size: 12px;
-      color: #3b82f6;
+      color: #FF8D21; /* Changed color */
       margin-top: 12px;
       word-break: break-all;
     }

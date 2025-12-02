@@ -408,9 +408,9 @@ function attachDictionaryEvents(dictionaryData) {
 
 function updateVocabButtonUI(btn, isOn) {
   if (isOn) {
-    btn.style.background = "#facc15";     // 노란색
-    btn.style.color = "#111";
-    btn.style.border = "1px solid #d4a317";
+    btn.style.background = "#FF8D21";     // New Orange Color
+    btn.style.color = "#fff";
+    btn.style.border = "1px solid #E87A13";
     btn.textContent = "📘 단어장 ON";
   } else {
     btn.style.background = "#f3f4f6";     // 원래 회색
