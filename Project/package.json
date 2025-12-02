@@ -1,7 +1,7 @@
 {
   "name": "cau-igeul-reader",
   "version": "1.0.0",
-  "description": "CAU IGEUL - 본문 추출 리더 모드",
+  "description": "이글: 이해되는 글읽기",
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch"

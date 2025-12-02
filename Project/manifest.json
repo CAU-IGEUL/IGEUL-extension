@@ -1,11 +1,10 @@
-{
-  "manifest_version": 3,
-  "name": "CAU IGEUL - 본문 추출 리더 모드",
-  "description": "네이버 뉴스, 스포츠, 블로그, 나무위키 등에서 본문 텍스트를 추출하고 가독성 있는 리더모드로 표시합니다.",
+{  "manifest_version": 3,
+  "name": "이글: 이해되는 글읽기",
+  "description": "네이버 뉴스, 블로그, 위키백과 등에서 본문 텍스트를 추출하고 가독성 있는 리더모드로 표시합니다. 사용자 프로필에 따른 맞춤형 글읽기 환경을 제공합니다.",
   "version": "1.0.0",
   "permissions": ["scripting", "activeTab", "storage", "identity"],
   "oauth2": {
-    "client_id": "119171161159-g4k78h0g1huerp15hmbhais35saelngg.apps.googleusercontent.com",
+    "client_id": "119171161159-g5vke4tgleh87mvj07chf8802fcj0peo.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile"
@@ -13,7 +12,19 @@
   },
   "action": {
     "default_title": "CAU IGEUL 실행",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/favicon16.png",
+      "32": "assets/favicon32.png",
+      "48": "assets/favicon48.png",
+      "128": "assets/favicon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/favicon16.png",
+    "32": "assets/favicon32.png",
+    "48": "assets/favicon48.png",
+    "128": "assets/favicon128.png"
   },
   "background": {
     "service_worker": "background.js",
@@ -31,7 +42,11 @@
     {
       "resources": [
         "fonts/PeachMarket-Regular.ttf",
-        "toggleToolbar.js"
+        "toggleToolbar.js",
+        "assets/favicon16.png",
+        "assets/favicon32.png",
+        "assets/favicon48.png",
+        "assets/favicon128.png"
       ],
       "matches": ["<all_urls>"]
     }

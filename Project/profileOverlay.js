@@ -20,7 +20,7 @@ function showProfileSetupOverlay(userData) {
     <div class="cau-igeul-overlay-backdrop"></div>
     <div class="cau-igeul-overlay-content">
       <div class="cau-igeul-setup-container">
-        <h1>CAU IGEUL</h1>
+        <h1>이글</h1>
         
         <div class="cau-igeul-user-info">
           <img src="${userData.photoURL || ''}" alt="User Photo" class="cau-igeul-user-photo">

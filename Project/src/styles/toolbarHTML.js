@@ -14,7 +14,7 @@ export function getToolbarHTML() {
           </button>
           <div id="settings-panel" class="dropdown-menu" style="display: none;">
             <div class="setting-item">
-              <span class="setting-label">Font</span>
+              <span class="setting-label">글꼴</span>
               <select id="font-select" class="font-dropdown">
                 <option value="default">기본 (Noto Sans KR)</option>
                 <option value="lexend">Lexend (읽기 쉬움)</option>
@@ -24,35 +24,35 @@ export function getToolbarHTML() {
               </select>
             </div>
             <div class="setting-item">
-              <span class="setting-label">Text Color</span>
+              <span class="setting-label">글자 색</span>
               <input type="color" id="text-color-picker" value="#222222">
             </div>
             <div class="setting-item">
-              <span class="setting-label">Background Color</span>
+              <span class="setting-label">배경 색</span>
               <input type="color" id="bg-color-picker" value="#FFFFFF">
             </div>
             <div class="setting-item">
-              <span class="setting-label">Text Size</span>
+              <span class="setting-label">글자 크기</span>
               <input type="range" id="size-slider" min="50" max="150" value="100" step="1">
               <span id="size-value">100%</span>
             </div>
             <div class="setting-item">
-              <span class="setting-label">Line Height</span>
+              <span class="setting-label">줄 높이</span>
               <input type="range" id="lineheight-slider" min="1" max="3" value="1.5" step="0.1">
               <span id="lineheight-value">1.5</span>
             </div>
             <div class="setting-item">
-              <span class="setting-label">Letter Spacing</span>
+              <span class="setting-label">글자 간격</span>
               <input type="range" id="letterspacing-slider" min="-2" max="10" value="0" step="0.5">
               <span id="letterspacing-value">0px</span>
             </div>
             <div class="setting-item">
-              <span class="setting-label">Width</span>
+              <span class="setting-label">너비</span>
               <input type="range" id="width-slider" min="50" max="120" value="100" step="1">
               <span id="width-value">100%</span>
             </div>
             <div class="setting-item">
-              <span class="setting-label">Text Align</span>
+              <span class="setting-label">정렬</span>
               <div class="align-buttons">
                 <button class="align-btn active" data-align="left"  title="왼쪽 정렬">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -99,25 +99,25 @@ export function getToolbarHTML() {
             <div class="guide-setting-item">
               <label class="checkbox-container">
                 <input type="checkbox" id="display-ruler-checkbox">
-                <span class="checkbox-label">Display Ruler</span>
+                <span class="checkbox-label">눈금자 표시</span>
               </label>
             </div>
             <div class="guide-setting-item">
-              <span class="guide-label">Color</span>
+              <span class="guide-label">색상</span>
               <input type="color" id="guide-color-picker" value="#60616aff">
             </div>
             <div class="guide-setting-item">
-              <span class="guide-label">Height</span>
+              <span class="guide-label">높이</span>
               <input type="range" id="guide-height-slider" min="20" max="200" value="60" step="10">
               <span id="guide-height-value">60px</span>
             </div>
             <div class="guide-setting-item">
-              <span class="guide-label">Opacity</span>
+              <span class="guide-label">투명도</span>
               <input type="range" id="guide-opacity-slider" min="0" max="100" value="20" step="5">
               <span id="guide-opacity-value">20%</span>
             </div>
             <div class="guide-setting-item">
-              <span class="guide-label">Position</span>
+              <span class="guide-label">위치</span>
               <input type="range" id="guide-position-slider" min="100" max="800" value="500" step="10">
               <span id="guide-position-value">500px</span>
             </div>
