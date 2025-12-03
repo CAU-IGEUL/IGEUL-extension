@@ -40,15 +40,43 @@ export function getFontFamily(fontKey) {
 export function initFontController() {
   console.log("✅ initFontController() 실행됨");
 
+  // 기본값 정의
+  const DEFAULTS = {
+    size: 100,
+    lineHeight: 1.5,
+    letterSpacing: 0,
+    widthPercent: 100,
+    align: 'left',
+    font: 'default',
+    textColor: '#222222',
+    contentBgColor: '#FFFFFF',
+  };
+
   // 폰트 상태 변수
-  let currentSize = 100;
-  let currentLineHeight = 1.5;
-  let currentLetterSpacing = 0;
-  let currentWidth = 720;
-  let currentAlign = 'left';
-  let currentFont = 'default';
-  let currentTextColor = '#222222';
-  let currentContentBgColor = '#FFFFFF';
+  let currentSize = DEFAULTS.size;
+  let currentLineHeight = DEFAULTS.lineHeight;
+  let currentLetterSpacing = DEFAULTS.letterSpacing;
+  let currentWidth; // 초기 너비는 슬라이더 핸들러에서 계산
+  let currentAlign = DEFAULTS.align;
+  let currentFont = DEFAULTS.font;
+  let currentTextColor = DEFAULTS.textColor;
+  let currentContentBgColor = DEFAULTS.contentBgColor;
+
+  // 프리셋 정의
+  const presets = {
+    'large-text': {
+      size: 125,
+      widthPercent: 110,
+    },
+    'dark-mode': {
+      textColor: '#e0e0e0',
+      bgColor: '#1e1e1e',
+    },
+    'eye-saver': {
+      textColor: '#335033',
+      bgColor: '#e9f5e9',
+    },
+  };
 
 
   // 폰트 스타일 엘리먼트 생성
@@ -89,6 +117,11 @@ export function initFontController() {
         color: ${currentTextColor} !important;
       }
 
+      /* 제목 색상 오버라이드 */
+      .focus-content .focus-title {
+        color: ${currentTextColor} !important;
+      }
+
       /* 제목 크기 */
       .focus-content h1 { font-size: ${baseFontSize * 1.75}px !important; margin: 1.5em 0 0.5em !important; }
       .focus-content h2 { font-size: ${baseFontSize * 1.5}px !important; margin: 1.3em 0 0.5em !important; }
@@ -106,6 +139,46 @@ export function initFontController() {
         color: #374151 !important;
       }
     `;
+  }
+  
+  // 스타일 초기화 함수
+  function resetStyles() {
+    // Dispatch events on controls to reset them to default values
+    const sizeSlider = document.getElementById('size-slider');
+    sizeSlider.value = DEFAULTS.size;
+    sizeSlider.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const lineHeightSlider = document.getElementById('lineheight-slider');
+    lineHeightSlider.value = DEFAULTS.lineHeight;
+    lineHeightSlider.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const letterSpacingSlider = document.getElementById('letterspacing-slider');
+    letterSpacingSlider.value = DEFAULTS.letterSpacing;
+    letterSpacingSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    const widthSlider = document.getElementById('width-slider');
+    widthSlider.value = DEFAULTS.widthPercent;
+    widthSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    const textColorPicker = document.getElementById('text-color-picker');
+    textColorPicker.value = DEFAULTS.textColor;
+    textColorPicker.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const bgColorPicker = document.getElementById('bg-color-picker');
+    bgColorPicker.value = DEFAULTS.contentBgColor;
+    bgColorPicker.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    const fontSelect = document.getElementById('font-select');
+    fontSelect.value = DEFAULTS.font;
+    fontSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    document.querySelectorAll('.align-btn').forEach(btn => {
+        const isActive = btn.dataset.align === DEFAULTS.align;
+        btn.classList.toggle('active', isActive);
+        if(isActive) {
+           currentAlign = DEFAULTS.align;
+        }
+    });
   }
 
 
@@ -181,6 +254,41 @@ export function initFontController() {
     });
   });
 
+  // ✨ 프리셋 버튼
+  document.querySelectorAll('.preset-btn')?.forEach(btn => {
+    btn.addEventListener('click', () => {
+      resetStyles(); // 먼저 모든 스타일을 기본값으로 초기화
+
+      const presetName = btn.dataset.preset;
+      const preset = presets[presetName];
+      if (!preset) return;
+
+      // 선택된 프리셋의 값들만 다시 적용
+      if (preset.size !== undefined) {
+        const slider = document.getElementById('size-slider');
+        slider.value = preset.size;
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (preset.widthPercent !== undefined) {
+        const slider = document.getElementById('width-slider');
+        slider.value = preset.widthPercent;
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (preset.textColor !== undefined) {
+        const picker = document.getElementById('text-color-picker');
+        picker.value = preset.textColor;
+        picker.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (preset.bgColor !== undefined) {
+        const picker = document.getElementById('bg-color-picker');
+        picker.value = preset.bgColor;
+        picker.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  });
+
   // 초기 스타일 반영
+  // 너비 슬라이더의 초기값을 수동으로 한 번 호출하여 currentWidth를 설정
+  document.getElementById('width-slider').dispatchEvent(new Event('input', { bubbles: true }));
   updateStyles();
 }

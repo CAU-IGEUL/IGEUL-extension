@@ -84,6 +84,15 @@ export function getToolbarHTML() {
                 </button>
               </div>
             </div>
+            <hr class="setting-divider">
+            <div class="setting-item preset-section">
+              <span class="setting-label">모드</span>
+              <div class="preset-buttons">
+                <button class="preset-btn" data-preset="large-text">큰 글자</button>
+                <button class="preset-btn" data-preset="dark-mode">다크</button>
+                <button class="preset-btn" data-preset="eye-saver">눈이 편한</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -104,7 +113,7 @@ export function getToolbarHTML() {
             </div>
             <div class="guide-setting-item">
               <span class="guide-label">색상</span>
-              <input type="color" id="guide-color-picker" value="#60616aff">
+              <input type="color" id="guide-color-picker" value="#60616a">
             </div>
             <div class="guide-setting-item">
               <span class="guide-label">높이</span>

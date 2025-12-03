@@ -254,6 +254,62 @@ export function applyToolbarStyles() {
     }
 
     /* ===================================
+       프리셋 버튼
+    =================================== */
+    .setting-divider {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 16px 0;
+    }
+
+    .preset-buttons {
+      display: flex;
+      gap: 8px;
+      width: 100%; /* Reverted */
+    }
+
+    .preset-btn {
+      flex: 1; /* Reverted */
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 0; /* Reverted padding */
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preset-btn:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+
+    .preset-btn:active {
+      transform: translateY(0);
+    }
+    
+    .preset-btn[data-preset='large-text'] {
+      font-weight: 700;
+    }
+    .preset-btn[data-preset='dark-mode'] {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border-color: #4b5563;
+    }
+    .preset-btn[data-preset='eye-saver'] {
+      background-color: #e9f5e9;
+      color: #335033;
+      border-color: #c1d4c1;
+    }
+
+
+    /* ===================================
        body 패딩
     =================================== */
     body {
