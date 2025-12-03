@@ -929,7 +929,7 @@ export function applyToolbarStyles() {
 
     .recommendations-section {
       margin-top: 60px;
-      padding: 32px 0;
+      padding: 32px 60px;
       border-top: 2px solid #e5e7eb;
     }
 

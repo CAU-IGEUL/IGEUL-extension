@@ -123,6 +123,7 @@ p {
 #profile-selection {
   background-color: white;
   padding: 0;
+  padding-bottom: 12px; /* Added padding to the bottom */
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   margin-bottom: 10px;
@@ -268,14 +269,13 @@ body.initial-profile-setup #profile-selection {
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
-  padding: 0 5px;
+  padding: 0;
 }
 
 .slider-descriptions span {
   font-size: 10px;
   color: #999;
   text-align: center;
-  flex: 1;
 }
 
 /* ===================================

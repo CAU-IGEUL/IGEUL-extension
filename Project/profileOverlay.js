@@ -55,7 +55,7 @@ function showProfileSetupOverlay(userData) {
                 <input type="radio" name="sentence-level" value="0">
                 <div class="cau-igeul-level-content">
                   <div class="cau-igeul-level-header">
-                    <span class="cau-igeul-level-number">레벨 0</span>
+                    
                     <span class="cau-igeul-level-badge cau-igeul-original-badge">원문</span>
                   </div>
                   <div class="cau-igeul-example-text">이 도시의 상징인, 수백 년의 역사를 간직한 채 강가에 서 있는 그 시계탑은 많은 관광객들의 사랑을 받는다.</div>
@@ -66,7 +66,6 @@ function showProfileSetupOverlay(userData) {
                 <input type="radio" name="sentence-level" value="1">
                 <div class="cau-igeul-level-content">
                   <div class="cau-igeul-level-header">
-                    <span class="cau-igeul-level-number">레벨 1</span>
                     <span class="cau-igeul-level-badge">약간 나눔</span>
                   </div>
                   <div class="cau-igeul-example-text">이 도시의 상징인 시계탑은 수백 년의 역사를 간직하고 있다. 그 시계탑은 강가에 서 있으며 많은 관광객들의 사랑을 받는다.</div>
@@ -77,8 +76,7 @@ function showProfileSetupOverlay(userData) {
                 <input type="radio" name="sentence-level" value="2">
                 <div class="cau-igeul-level-content">
                   <div class="cau-igeul-level-header">
-                    <span class="cau-igeul-level-number">레벨 2</span>
-                    <span class="cau-igeul-level-badge">많이 나눔</span>
+                  <span class="cau-igeul-level-badge">많이 나눔</span>
                   </div>
                   <div class="cau-igeul-example-text">이 도시의 상징은 수백 년의 역사를 간직한 시계탑이다. 시계탑은 강가에 서 있다. 많은 관광객들이 시계탑을 사랑한다.</div>
                 </div>
@@ -101,7 +99,6 @@ function showProfileSetupOverlay(userData) {
                 <input type="radio" name="vocab-level" value="0">
                 <div class="cau-igeul-level-content">
                   <div class="cau-igeul-level-header">
-                    <span class="cau-igeul-level-number">레벨 0</span>
                     <span class="cau-igeul-level-badge cau-igeul-original-badge">원문</span>
                   </div>
                   <div class="cau-igeul-example-text">모두가 그의 성공을 의심했지만, 그는 보란 듯이 재기하여 회의론자들의 코를 납작하게 만들었습니다.</div>
@@ -112,7 +109,6 @@ function showProfileSetupOverlay(userData) {
                 <input type="radio" name="vocab-level" value="1">
                 <div class="cau-igeul-level-content">
                   <div class="cau-igeul-level-header">
-                    <span class="cau-igeul-level-number">레벨 1</span>
                     <span class="cau-igeul-level-badge">쉬운 어휘</span>
                   </div>
                   <div class="cau-igeul-example-text">모두가 그의 성공을 의심했지만, 그는 확실히 다시 일어나 회의론자들을 놀라게 했습니다.</div>
@@ -123,7 +119,6 @@ function showProfileSetupOverlay(userData) {
                 <input type="radio" name="vocab-level" value="2">
                 <div class="cau-igeul-level-content">
                   <div class="cau-igeul-level-header">
-                    <span class="cau-igeul-level-number">레벨 2</span>
                     <span class="cau-igeul-level-badge">더 쉬운 어휘</span>
                   </div>
                   <div class="cau-igeul-example-text">많은 사람들이 그의 성공을 의심했지만, 그는 결국 성공하여 비판자들을 당황하게 만들었습니다.</div>

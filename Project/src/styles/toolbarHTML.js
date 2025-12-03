@@ -222,11 +222,6 @@ export function getToolbarHTML() {
             <div class="profile-section">
               <label class="profile-section-label">문장 분해 정도를 선택해주세요.</label>
               <div class="profile-slider-container">
-                <div class="profile-slider-labels">
-                  <span>레벨 0</span>
-                  <span>레벨 1</span>
-                  <span>레벨 2</span>
-                </div>
                 <div class="profile-slider-track">
                   <input type="range" name="sentence-level" min="0" max="2" step="1" value="0" class="profile-level-slider">
                   <div class="profile-slider-indicators">
@@ -247,11 +242,6 @@ export function getToolbarHTML() {
             <div class="profile-section">
               <label class="profile-section-label">어휘 난이도 정도를 선택해주세요.</label>
               <div class="profile-slider-container">
-                <div class="profile-slider-labels">
-                  <span>레벨 0</span>
-                  <span>레벨 1</span>
-                  <span>레벨 2</span>
-                </div>
                 <div class="profile-slider-track">
                   <input type="range" name="vocab-level" min="0" max="2" step="1" value="0" class="profile-level-slider">
                   <div class="profile-slider-indicators">

@@ -6,16 +6,12 @@ const API_BASE_URL = 'https://us-central1-igeul-66a16.cloudfunctions.net';
 /* ===================================
    더 읽을 콘텐츠 추천 초기화
 =================================== */
-export function initReadingRecommendations() {
+export async function initReadingRecommendations() {
   console.log('📚 더 읽을 콘텐츠 추천 기능 초기화');
   
   setupToggleListener();
   
-  setTimeout(async () => {
-    console.log('📄 추천 콘텐츠 로드 시작');
-    await loadRecommendations();
-  }, 1000);
-
+  await loadRecommendations();
 }
 
   /* ===================================
@@ -194,44 +190,43 @@ async function loadRecommendations() {
    추천 콘텐츠 UI 표시
 =================================== */
 function displayRecommendations(recommendations) {
-  // 기존 추천 섹션 제거
-  let existingSection = document.getElementById('recommendations-section');
-  if (existingSection) {
-    existingSection.remove();
-  }
-
-  // 본문 컨테이너 찾기
   const focusReader = document.getElementById('focus-reader');
   if (!focusReader) {
     console.error('본문 컨테이너를 찾을 수 없습니다.');
     return;
   }
 
-  // 토글 상태 확인
-  const toggle = document.getElementById('recommendations-toggle');
-  const isVisible = toggle ? toggle.checked : true;
+  let section = document.getElementById('recommendations-section');
 
-  // 추천 섹션 생성
-  const recommendationsHTML = `
-    <div id="recommendations-section" class="recommendations-section" style="display: ${isVisible ? 'block' : 'none'};">
-      <h2 class="recommendations-title">더 읽을 콘텐츠</h2>
-      <div class="recommendations-grid">
-        ${recommendations.map(rec => `
-          <a href="${rec.link}" target="_blank" class="recommendation-card">
-            ${rec.image ? `<img src="${rec.image}" alt="${rec.title}" class="recommendation-image" onerror="this.style.display='none'">` : ''}
-            <div class="recommendation-content">
-              <h3 class="recommendation-title">${rec.title}</h3>
-              <p class="recommendation-snippet">${rec.snippet}</p>
-              <span class="recommendation-link">${new URL(rec.link).hostname}</span>
-            </div>
-          </a>
-        `).join('')}
-      </div>
+  // If section doesn't exist, create it.
+  if (!section) {
+    const sectionHTML = `<div id="recommendations-section" class="recommendations-section"></div>`;
+    focusReader.insertAdjacentHTML('beforeend', sectionHTML);
+    section = document.getElementById('recommendations-section');
+  }
+
+  // Build the inner content and set it.
+  const innerHTML = `
+    <h2 class="recommendations-title">더 읽을 콘텐츠</h2>
+    <div class="recommendations-grid">
+      ${recommendations.map(rec => `
+        <a href="${rec.link}" target="_blank" class="recommendation-card">
+          ${rec.image ? `<img src="${rec.image}" alt="${rec.title}" class="recommendation-image" onerror="this.style.display='none'">` : ''}
+          <div class="recommendation-content">
+            <h3 class="recommendation-title">${rec.title}</h3>
+            <p class="recommendation-snippet">${rec.snippet}</p>
+            <span class="recommendation-link">${new URL(rec.link).hostname}</span>
+          </div>
+        </a>
+      `).join('')}
     </div>
   `;
-
-  // 본문 끝에 추가
-  focusReader.insertAdjacentHTML('beforeend', recommendationsHTML);
+  section.innerHTML = innerHTML;
   
+  // Ensure visibility is correct based on toggle state
+  const toggle = document.getElementById('recommendations-toggle');
+  const isVisible = toggle ? toggle.checked : true;
+  section.style.display = isVisible ? 'block' : 'none';
+
   console.log('✅ 추천 콘텐츠 표시 완료:', recommendations.length, '개');
 }
