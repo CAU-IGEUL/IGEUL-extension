@@ -167,6 +167,20 @@ async function loadRecommendations() {
     // API 호출
     const result = await fetchRecommendations(paragraphs);
 
+    // API 응답 상태가 'disabled'인 경우, 토글 비활성화 및 설정 동기화
+    if (result.status === 'disabled') {
+      console.log('서버로부터 추천 기능이 비활성화되었습니다.');
+      if (recommendationsSection) {
+        recommendationsSection.style.display = 'none';
+      }
+      if (toggle) {
+        toggle.checked = false;
+      }
+      // 설정을 서버 및 로컬에 동기화
+      await apiService.updateRecommendationSettings(false);
+      return;
+    }
+
     if (result.status === 'success' && result.recommendations && result.recommendations.length > 0) {
       displayRecommendations(result.recommendations);
     } else {
