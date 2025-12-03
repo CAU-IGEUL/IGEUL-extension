@@ -28,12 +28,12 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         sendResponse({ status: 'success' });
       } else {
         // Handle case where content could not be extracted
-        alert("본문을 추출할 수 없습니다. 😢");
+        alert("본문을 추출할 수 없습니다.");
         sendResponse({ status: 'failure', reason: 'no_content' });
       }
     } catch (error) {
       console.error("Error during content extraction:", error);
-      alert("본문 추출 중 오류가 발생했습니다. 😢");
+      alert("본문 추출 중 오류가 발생했습니다.");
       sendResponse({ status: 'failure', reason: error.message });
     }
     // Return true to indicate that the response is sent asynchronously

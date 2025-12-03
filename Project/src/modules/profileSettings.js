@@ -3,7 +3,7 @@
 import { apiService } from './api.js';
 
 export function initProfileSettings() {
-  console.log("✅ initProfileSettings() 실행됨");
+  console.log("initProfileSettings() 실행됨");
 
   if (!window.apiService) {
     window.apiService = apiService;
@@ -90,7 +90,7 @@ export function initProfileSettings() {
       [중요] 프로필 데이터 화면에 뿌리기
   =================================== */
   function displayProfile(profile) {
-    console.log('🖥️ 화면에 프로필 표시:', profile);
+    console.log('화면에 프로필 표시:', profile);
     
     // 1. 문장 레벨 설정
     const sentenceSlider = document.querySelector('#profile-modal input[name="sentence-level"]');
@@ -151,7 +151,7 @@ export function initProfileSettings() {
       }
 
     } catch (error) {
-      console.error('❌ 프로필 불러오기 오류:', error);
+      console.error('프로필 불러오기 오류:', error);
       showError();
     }
   }
@@ -187,7 +187,7 @@ export function initProfileSettings() {
         knownTopics: selectedKnownTopics
       };
 
-      console.log('📤 저장할 프로필 데이터:', profileData);
+      console.log('저장할 프로필 데이터:', profileData);
 
       // 4. API로 전송 (api.js 사용)
       if (window.apiService) {
@@ -199,7 +199,7 @@ export function initProfileSettings() {
       }
 
     } catch (error) {
-      console.error('❌ 프로필 저장 실패:', error);
+      console.error('프로필 저장 실패:', error);
       alert('저장하지 못했습니다. 다시 시도해주세요.');
     } finally {
         // 버튼 상태 원상복구

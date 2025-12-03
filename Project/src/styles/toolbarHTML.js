@@ -154,11 +154,11 @@ export function getToolbarHTML() {
       </div> 
 
       <div class="right-btns">
-        <button id="extract-btn" class="action-btn">📄 본문 추출</button>
-        <button id="reader-btn"  class="action-btn">🕮 집중모드</button>
-        <button id="simplify-btn" class="action-btn">🪄 문장순화</button>
-        <button id="vocab-btn" class="action-btn">📘 단어장</button>
-        <button id="exit-reader" class="action-btn" style="display:none; background:#ef4444; color:white; border:none;">✖ 닫기</button>
+        <button id="extract-btn" class="action-btn">본문 추출</button>
+        <button id="reader-btn"  class="action-btn">집중모드</button>
+        <button id="simplify-btn" class="action-btn">문장순화</button>
+        <button id="vocab-btn" class="action-btn">단어사전</button>
+        <button id="exit-reader" class="action-btn" style="display:none; background:#ef4444; color:white; border:none;">닫기</button>
       </div>
     </div>
 
@@ -299,7 +299,7 @@ export function getToolbarHTML() {
               </div>
             </div>
 
-            <button id="profile-save-btn" class="profile-save-btn">💾 저장하기</button>
+            <button id="profile-save-btn" class="profile-save-btn">저장하기</button>
           </div>
 
           <div id="profile-error" class="profile-error" style="display: none;">

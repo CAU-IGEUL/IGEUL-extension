@@ -82,11 +82,11 @@ export async function initDictionaryAnalysis(paragraphs) {
     });
 
     // 서버에서 요구하는 형태 그대로 보냄
-    console.log("📤 Dictionary 요청 Body:", paragraphs);
+    console.log("Dictionary 요청 Body:", paragraphs);
 
     const res = await requestDictionaryApi(paragraphs, idToken);
 
-    console.log("📩 Dictionary API 응답:", res);
+    console.log("Dictionary API 응답:", res);
 
     dictionaryJobId = res.jobId; // Store job ID
 
@@ -102,11 +102,11 @@ export async function initDictionaryAnalysis(paragraphs) {
 
     dictionaryData = await pollDictionaryResult(dictionaryJobId, idToken);
 
-    console.log("📘 Dictionary Data 완료:", dictionaryData);
+    console.log("Dictionary Data 완료:", dictionaryData);
 
     initVocabToggle();
   } catch (err) {
-    console.error("❌ Dictionary API 실패:", err);
+    console.error("Dictionary API 실패:", err);
     hideToast(); // 🍞 실패 시 토스트 숨기기
   }
 }
@@ -122,7 +122,7 @@ function pollDictionaryResult(jobId, idToken) {
     const interval = setInterval(async () => {
       try {
         const result = await getDictionaryResult(jobId, idToken);
-        console.log("⏳ [Dictionary Polling]", result.status);
+        console.log("[Dictionary Polling]", result.status);
   
         if (result.status === "completed") {
           clearInterval(interval);
@@ -164,7 +164,7 @@ function initVocabToggle() {
     updateVocabButtonUI(btn, vocabMode);
 
     if (turningOn) {
-      console.log("📘 단어장 모드 ON 시도");
+      console.log("단어장 모드 ON 시도");
 
       // Helper function to activate UI
       const activateVocabUI = () => {
@@ -178,14 +178,14 @@ function initVocabToggle() {
 
       // 1. If data is already available, just use it.
       if (dictionaryData && dictionaryData.length > 0) {
-        console.log("📘 데이터 있음. 단어장 활성화.");
+        console.log("데이터 있음. 단어장 활성화.");
         activateVocabUI();
         return;
       }
 
       // 2. If data is not available, check the job status.
       if (dictionaryJobId) {
-        console.log("📘 데이터 없음. Job ID로 상태 확인:", dictionaryJobId);
+        console.log("데이터 없음. Job ID로 상태 확인:", dictionaryJobId);
         try {
           const idToken = await new Promise((resolve, reject) => {
             chrome.runtime.sendMessage({ action: 'getAuthToken' }, (response) => {
@@ -197,7 +197,7 @@ function initVocabToggle() {
           const result = await getDictionaryResult(dictionaryJobId, idToken);
 
           if (result.status === 'completed') {
-            console.log("📘 사전 데이터 확인 완료. 단어장 활성화.");
+            console.log("사전 데이터 확인 완료. 단어장 활성화.");
             dictionaryData = result.data;
             activateVocabUI();
           } else if (result.status === 'processing') {
@@ -223,7 +223,7 @@ function initVocabToggle() {
         updateVocabButtonUI(btn, vocabMode);
       }
     } else { // Turning OFF
-      console.log("📘 단어장 모드 OFF");
+      console.log("단어장 모드 OFF");
       if (originalHtmlBackup) {
         content.innerHTML = originalHtmlBackup;
       }
@@ -370,8 +370,8 @@ function openWordPanel(item) {
     panel.classList.add("show");
     panel.innerHTML = `
       <div class="word-panel-header">
-        📘 단어 정보
-        <button id="close-word-panel">✖</button>
+        단어 정보
+        <button id="close-word-panel">X</button>
       </div>
       <div id="word-panel-body">${html}</div>
     `;
@@ -411,12 +411,12 @@ function updateVocabButtonUI(btn, isOn) {
     btn.style.background = "#FF8D21";     // New Orange Color
     btn.style.color = "#fff";
     btn.style.border = "1px solid #E87A13";
-    btn.textContent = "📘 단어장 ON";
+    btn.textContent = "단어사전";
   } else {
     btn.style.background = "#f3f4f6";     // 원래 회색
     btn.style.color = "#333";
     btn.style.border = "1px solid #d1d5db";
-    btn.textContent = "🔍 단어장";
+    btn.textContent = "단어사전";
   }
 }
 

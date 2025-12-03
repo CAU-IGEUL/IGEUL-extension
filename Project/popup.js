@@ -310,7 +310,7 @@ profileBtn.addEventListener('click', async () => {
           console.error("Error sending message to content script:", chrome.runtime.lastError);
           // 에러 발생 시 버튼 활성화 및 텍스트 복원
           extractBtn.disabled = false;
-          extractBtn.textContent = '📄 본문 추출';
+          extractBtn.textContent = '본문 추출';
         }
         window.close(); // Close the popup window
       });

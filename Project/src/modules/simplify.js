@@ -60,7 +60,7 @@ export function initSimplifyFeature({
       }));
 
       const res = await requestSimplifyText(dto.title, paragraphsForAPI, idToken);
-      console.log("✨ 문장 순화 응답:", res);
+      console.log("문장 순화 응답:", res);
 
       lastJobId = res.jobId;
 
@@ -77,7 +77,7 @@ export function initSimplifyFeature({
       onModeChange("simplified");
 
     } catch (err) {
-      console.error("❌ 문장 순화 오류:", err);
+      console.error("문장 순화 오류:", err);
       alert("문장 순화 중 오류가 발생했습니다.");
     } finally {
       hideSimplifyLoading();
@@ -100,7 +100,7 @@ export function initSimplifyFeature({
   });
 
   /* -------------------------------------------------------
-     📊 리포트 조회
+     리포트 조회
   ------------------------------------------------------- */
   document.getElementById("report-view")?.addEventListener("click", async () => {
     if (!lastJobId) {
@@ -126,7 +126,7 @@ export function initSimplifyFeature({
       }
 
     } catch (err) {
-      console.error("❌ 리포트 조회 오류:", err);
+      console.error("리포트 조회 오류:", err);
       alert("리포트 조회 중 오류가 발생했습니다.");
     }
   });

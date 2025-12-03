@@ -41,7 +41,7 @@ export function renderReaderMode(dto) {
   document.body.prepend(toolbar);
 
   const vocabBtn = document.getElementById("vocab-btn");
-  if (vocabBtn) vocabBtn.textContent = "🔍 단어장";
+  if (vocabBtn) vocabBtn.textContent = "단어장";
 
   const extractBtn = document.getElementById("extract-btn");
   const readerBtn = document.getElementById("reader-btn");
@@ -57,7 +57,7 @@ export function renderReaderMode(dto) {
   }
 
   /* -------------------------------------------------------
-     🔥 문장 순화 패널 UI
+     문장 순화 패널 UI
   ------------------------------------------------------- */
   const simplifyPanel = document.createElement("div");
   simplifyPanel.id = "simplify-panel";
@@ -74,7 +74,7 @@ export function renderReaderMode(dto) {
     </div>
 
     <div class="right-section">
-      <button id="report-view">📊 리포트 보기</button>
+      <button id="report-view">리포트 보기</button>
     </div>
   `;
   document.body.prepend(simplifyPanel);
@@ -86,7 +86,7 @@ export function renderReaderMode(dto) {
   });
 
   /* -------------------------------------------------------
-     📘 드롭다운 메뉴 로직
+     드롭다운 메뉴 로직
   ------------------------------------------------------- */
   const readingGuide = document.createElement('div');
   readingGuide.id = 'reading-guide';
@@ -136,7 +136,7 @@ export function renderReaderMode(dto) {
 
 
   /* -------------------------------------------------------
-     📄 본문 영역 생성 (이미지 + 텍스트)
+     본문 영역 생성 (이미지 + 텍스트)
   ------------------------------------------------------- */
   const container = document.createElement("div");
   container.id = "focus-reader";
@@ -156,7 +156,7 @@ export function renderReaderMode(dto) {
 
 
   /* -------------------------------------------------------
-     🔥 원문 문단 배열 구성 (텍스트 문단만)
+     원문 문단 배열 구성 (텍스트 문단만)
      - simplify.js로 넘겨줄 originalParagraphs
   ------------------------------------------------------- */
   const textParagraphs = dto.paragraphs.filter(p => p.type === "text");
@@ -171,7 +171,7 @@ export function renderReaderMode(dto) {
   });
 
   /* -------------------------------------------------------
-     🔍 단어장 분석 초기화
+     단어장 분석 초기화
   ------------------------------------------------------- */
   const dictionaryParagraphs = textParagraphs.map((p, idx) => ({
     id: idx + 1,
@@ -181,7 +181,7 @@ export function renderReaderMode(dto) {
 
 
   /* -------------------------------------------------------
-     🪄 문장 순화 기능 등록 (simplify.js)
+     문장 순화 기능 등록 (simplify.js)
   ------------------------------------------------------- */
   initSimplifyFeature({
     dto,
@@ -201,7 +201,7 @@ export function renderReaderMode(dto) {
 
 
   /* -------------------------------------------------------
-     🔥 문단 렌더링 함수
+     문단 렌더링 함수
   ------------------------------------------------------- */
   function renderParagraphs() {
     const contentBox = document.querySelector(".focus-content");
@@ -256,9 +256,9 @@ export function renderReaderMode(dto) {
 
       console.group("[COMPARE MODE - SIMPLE] 디버깅 로그");
 
-      console.log("📌 원문 문단(dto.paragraphs) 전체:", dto.paragraphs);
-      console.log("📌 순화문 배열(simplifiedParagraphs):", simplifiedParagraphs);
-      console.log("📌 순화문 문단 수:", simplifiedParagraphs.length);
+      console.log("원문 문단(dto.paragraphs) 전체:", dto.paragraphs);
+      console.log("순화문 배열(simplifiedParagraphs):", simplifiedParagraphs);
+      console.log("순화문 문단 수:", simplifiedParagraphs.length);
 
       html += `<div class="compare-container">`;
 
@@ -267,7 +267,7 @@ export function renderReaderMode(dto) {
 
         // 이미지 문단 → 한 줄 중앙 배치 + 순서 유지
         if (p.type === "image") {
-          console.log("🖼 이미지 문단 → 비교 생략");
+          console.log("이미지 문단 → 비교 생략");
           console.groupEnd();
           html += `
             <div class="compare-image-row">
@@ -281,8 +281,8 @@ export function renderReaderMode(dto) {
         const orig = p.content || "";
         const simp = simplifiedParagraphs[i] || "-순화문 없음-";
 
-        console.log("📝 원문:", orig);
-        console.log("✨ 순화문:", simp);
+        console.log("원문:", orig);
+        console.log("순화문:", simp);
         html += `
           <div class="compare-row">
             <div class="compare-cell compare-left">
@@ -300,7 +300,7 @@ export function renderReaderMode(dto) {
 
     contentBox.innerHTML = html;
 
-    // 📘 단어장 모드 적용
+    // 단어장 모드 적용
     if (vocabMode) {
       const target = document.querySelector(".focus-content");
       wrapWordsInTextNodes(target, dictionaryData);
@@ -310,7 +310,7 @@ export function renderReaderMode(dto) {
 
 
   /* -------------------------------------------------------
-     ❌ Exit 버튼
+      Exit 버튼
   ------------------------------------------------------- */
   exitBtn?.addEventListener("click", () => {
     const content = document.querySelector(".focus-content");
@@ -325,7 +325,7 @@ export function renderReaderMode(dto) {
 
 
   /* -------------------------------------------------------
-     📚 스타일 (통째로 유지)
+     스타일 (통째로 유지)
   ------------------------------------------------------- */
   const readerStyle = document.createElement("style");
   readerStyle.textContent = `
