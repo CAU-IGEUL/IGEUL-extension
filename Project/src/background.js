@@ -6,6 +6,14 @@ import { GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut }
 // API 주소 설정
 const API_BASE_URL = 'https://us-central1-igeul-66a16.cloudfunctions.net';
 
+// Firebase Auth가 초기화되고 사용자의 로그인 상태가 확정될 때 resolve되는 Promise
+const authReady = new Promise(resolve => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    // 이 리스너는 계속 유지되어야 하므로 unsubscribe()는 호출하지 않습니다.
+    resolve(user);
+  });
+});
+
 // Listen for messages from popup.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'login') {
@@ -31,15 +39,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; // Indicates an asynchronous response
   }
-  // 4. 토큰 발급 요청 처리
+  // 4. 토큰 발급 요청 처리 (수정됨)
   else if (request.action === 'getAuthToken') {
-    if (auth.currentUser) {
-      auth.currentUser.getIdToken(true)
-        .then(token => sendResponse({ token: token }))
-        .catch(error => sendResponse({ error: error.message }));
-    } else {
-      sendResponse({ error: 'User not logged in' });
-    }
+    authReady.then(() => {
+      if (auth.currentUser) {
+        auth.currentUser.getIdToken() // true 제거
+          .then(token => sendResponse({ token: token }))
+          .catch(error => sendResponse({ error: error.message }));
+      } else {
+        sendResponse({ error: 'User not logged in' });
+      }
+    });
     return true;
   }
   // 5. 프로필 저장 대행

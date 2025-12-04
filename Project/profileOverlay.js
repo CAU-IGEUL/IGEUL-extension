@@ -156,7 +156,7 @@ function showProfileSetupOverlay(userData) {
   style.id = 'cau-igeul-overlay-style';
   style.textContent = `
     #cau-igeul-profile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    .cau-igeul-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); }
+    .cau-igeul-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
     .cau-igeul-overlay-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 90vh; overflow-y: auto; z-index: 1000000; }
     .cau-igeul-setup-container { background-color: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 600px; width: 90vw; text-align: center; }
     .cau-igeul-user-info { display: flex; align-items: center; justify-content: center; margin-bottom: 30px; padding: 16px; background-color: #e8f0fe; border-radius: 12px; }

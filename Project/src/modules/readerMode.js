@@ -11,7 +11,7 @@ import {
   wrapWordsInTextNodes,
   attachDictionaryEvents
 } from "./dictionary.js";
-import { initSimplifyFeature, splitParagraphs} from "./simplify.js"; // 🔥 새로 추가된 부분
+import { initSimplifyFeature, normalizeParagraphs} from "./simplify.js"; //함수 변경
 import { initSummary } from './summary.js';
 import { initProfileSettings } from './profileSettings.js';
 import { initReadingRecommendations } from './readingRecommendations.js';
@@ -155,11 +155,9 @@ export function renderReaderMode(dto) {
   document.body.appendChild(container);
 
 
-  /* -------------------------------------------------------
-     원문 문단 배열 구성 (텍스트 문단만)
-     - simplify.js로 넘겨줄 originalParagraphs
-  ------------------------------------------------------- */
-  const textParagraphs = dto.paragraphs.filter(p => p.type === "text");
+
+/* 원문 문단 배열 구성 변경
+	const textParagraphs = dto.paragraphs.filter(p => p.type === "text");
   originalParagraphs = textParagraphs.flatMap(p =>
     splitParagraphs(p.content || "")
   );
@@ -168,21 +166,13 @@ export function renderReaderMode(dto) {
   dto.paragraphs.forEach(p => {
     if (p.type === "image") splitCounts.push(null);
     else splitCounts.push(splitParagraphs(p.content || "").length);
-  });
-
-  /* -------------------------------------------------------
-     단어장 분석 초기화
-  ------------------------------------------------------- */
-  const dictionaryParagraphs = textParagraphs.map((p, idx) => ({
-    id: idx + 1,
-    text: p.content
-  }));
-  initDictionaryAnalysis(dictionaryParagraphs);
-
-
-  /* -------------------------------------------------------
-     문장 순화 기능 등록 (simplify.js)
-  ------------------------------------------------------- */
+  });*/
+  //밑에 처럼 변경
+	const textParagraphs = dto.paragraphs.filter(p => p.type === "text");
+	const { finalList, serverInput, mapIndex } = normalizeParagraphs(dto);
+	originalParagraphs = finalList;
+//initSimplifyFeature
+  /*
   initSimplifyFeature({
     dto,
     originalParagraphs,
@@ -197,13 +187,28 @@ export function renderReaderMode(dto) {
       currentMode = mode;
       renderParagraphs();
     }
+  });*/
+  
+	initSimplifyFeature({
+    dto,
+    finalList,
+    serverInput,
+    mapIndex,
+
+    onUpdateSimplified: (newTexts) => {
+      simplifiedParagraphs = newTexts;
+      renderParagraphs();
+    },
+
+    onModeChange: (mode) => {
+      currentMode = mode;
+      renderParagraphs();
+    }
   });
-
-
-  /* -------------------------------------------------------
-     문단 렌더링 함수
-  ------------------------------------------------------- */
-  function renderParagraphs() {
+  
+  //renderParagraphs 변경
+  
+    function renderParagraphs() {
     const contentBox = document.querySelector(".focus-content");
     if (!contentBox) return;
 
@@ -211,7 +216,7 @@ export function renderReaderMode(dto) {
 
     /* 1) 원문만 보기 */
     if (currentMode === "original") {
-      dto.paragraphs.forEach(p => {
+      finalList.forEach(p => {
         if (p.type === "image") {
           html += `<img src="${p.content}" alt="image" class="focus-image">`;
         } else {
@@ -226,24 +231,26 @@ export function renderReaderMode(dto) {
 
       html += `<div class="simplified-only-container">`;
 
-      dto.paragraphs.forEach((p, i) => {
+      finalList.forEach((p, i) => {
 
-        // 이미지 문단 → 그대로 표시
+        // 이미지 문단 → 그대로 표시 변경
         if (p.type === "image") {
           html += `
             <div class="simplified-image-row">
-              <img src="${p.content}" class="simplified-image">
+              <img src="${p.content}" class="focus-image">
             </div>
           `;
           return;
         }
 
-        // 텍스트 문단 → 순화된 문장만 출력
-        const simp = simplifiedParagraphs[i] || "-순화문 없음-";
+        /* 텍스트 문단 → 순화된 문장만 출력*/
+        const simpObj = simplifiedParagraphs[i];
+        const simp = simpObj?.content || " ";
 
         html += `
           <div class="simplified-text-row">
             ${simp.replace(/\n/g, "<br>")}
+            <br><br>
           </div>
         `;
       });
@@ -256,18 +263,18 @@ export function renderReaderMode(dto) {
 
       console.group("[COMPARE MODE - SIMPLE] 디버깅 로그");
 
-      console.log("원문 문단(dto.paragraphs) 전체:", dto.paragraphs);
-      console.log("순화문 배열(simplifiedParagraphs):", simplifiedParagraphs);
-      console.log("순화문 문단 수:", simplifiedParagraphs.length);
+      console.log("📌 원문 문단(dto.paragraphs) 전체:", dto.paragraphs);
+      console.log("📌 순화문 배열(simplifiedParagraphs):", simplifiedParagraphs);
+      console.log("📌 순화문 문단 수:", simplifiedParagraphs.length);
 
       html += `<div class="compare-container">`;
 
 
-      dto.paragraphs.forEach((p, i) => {
+      finalList.forEach((p, i) => {
 
         // 이미지 문단 → 한 줄 중앙 배치 + 순서 유지
         if (p.type === "image") {
-          console.log("이미지 문단 → 비교 생략");
+          console.log("🖼 이미지 문단 → 비교 생략");
           console.groupEnd();
           html += `
             <div class="compare-image-row">
@@ -279,10 +286,10 @@ export function renderReaderMode(dto) {
 
         // 텍스트 문단 → 좌/우 비교 박스
         const orig = p.content || "";
-        const simp = simplifiedParagraphs[i] || "-순화문 없음-";
+        const simp = simplifiedParagraphs[i]?.content || " ";
 
-        console.log("원문:", orig);
-        console.log("순화문:", simp);
+        console.log("📝 원문:", orig);
+        console.log("✨ 순화문:", simp);
         html += `
           <div class="compare-row">
             <div class="compare-cell compare-left">
@@ -300,7 +307,7 @@ export function renderReaderMode(dto) {
 
     contentBox.innerHTML = html;
 
-    // 단어장 모드 적용
+    // 📘 단어장 모드 적용
     if (vocabMode) {
       const target = document.querySelector(".focus-content");
       wrapWordsInTextNodes(target, dictionaryData);
@@ -329,6 +336,13 @@ export function renderReaderMode(dto) {
   ------------------------------------------------------- */
   const readerStyle = document.createElement("style");
   readerStyle.textContent = `
+    body.loading-blur .focus-content,
+    body.loading-blur #custom-toolbar,
+    body.loading-blur #simplify-panel {
+      filter: blur(4px);
+      pointer-events: none;
+      user-select: none;
+    }
     body {
       margin: 0;
       background: #f5f5f5;
@@ -336,7 +350,7 @@ export function renderReaderMode(dto) {
       line-height: 1.7;
       color: #222;
     }
-
+      
     .focus-content {
       background: white;
       margin: 120px auto 60px;
