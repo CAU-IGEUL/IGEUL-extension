@@ -41,7 +41,7 @@ export function renderReaderMode(dto) {
   document.body.prepend(toolbar);
 
   const vocabBtn = document.getElementById("vocab-btn");
-  if (vocabBtn) vocabBtn.textContent = "단어장";
+  if (vocabBtn) vocabBtn.textContent = "단어사전";
 
   const extractBtn = document.getElementById("extract-btn");
   const readerBtn = document.getElementById("reader-btn");

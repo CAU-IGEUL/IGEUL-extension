@@ -69,7 +69,7 @@ export function initSimplifyFeature({
                 simplificationReportData = report.analysis;
                 if (reportButton) {
                     reportButton.disabled = false;
-                    reportButton.textContent = "리포트 보기 ✨";
+                    reportButton.textContent = "리포트 보기";
                 }
                 return; // Success, exit polling loop
             }
