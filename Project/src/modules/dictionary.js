@@ -2,6 +2,7 @@
 
 import { requestDictionaryApi, getDictionaryResult } from "./api.js"; // Keep requestDictionaryApi import for now if needed elsewhere or for future uncommenting
 
+
 // 전역 상태
 let dictionaryData = [];
 let dictionaryJobId = null; // To hold the job ID
@@ -14,7 +15,7 @@ let vocabToggleInitialized = false; // 🔥 Listener guard
 // ===================================================================================
 // 🍞 Toast UI
 // ===================================================================================
-function showToast(message, temporary = false, duration = 2700) {
+function showToast(message, temporary = false, duration = 1500) {
   console.log('Toast should show:', message); // For debugging
   if (!toastEl) {
     toastEl = document.createElement('div');
@@ -90,9 +91,6 @@ export async function initDictionaryAnalysis(paragraphs) {
 
     dictionaryJobId = res.jobId; // Store job ID
 
-    if (res.status === 'processing') {
-      showToast("사전 생성 중...", true);
-    }
 
     if (!dictionaryJobId) {
       console.error("Dictionary jobId 없음. 응답:", res);
@@ -101,15 +99,18 @@ export async function initDictionaryAnalysis(paragraphs) {
     }
 
     dictionaryData = await pollDictionaryResult(dictionaryJobId, idToken);
-
+    
     console.log("Dictionary Data 완료:", dictionaryData);
 
     initVocabToggle();
   } catch (err) {
     console.error("Dictionary API 실패:", err);
+    showToast(`사전 생성 실패: ${err.message}`, true); // 사용자에게 실패 메시지 표시
     hideToast(); // 🍞 실패 시 토스트 숨기기
+    throw err; // 에러 다시 던지기
   }
 }
+
 
 
 
@@ -126,7 +127,7 @@ function pollDictionaryResult(jobId, idToken) {
   
         if (result.status === "completed") {
           clearInterval(interval);
-          hideToast();
+          showToast("사전 생성이 완료되었습니다.", true);
           resolve(result.data);
         } else if (result.status === "failed") {
           clearInterval(interval);
