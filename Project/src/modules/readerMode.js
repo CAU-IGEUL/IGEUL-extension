@@ -79,6 +79,12 @@ export function renderReaderMode(dto) {
   `;
   document.body.prepend(simplifyPanel);
 
+  // Hide sections that should only appear after simplification
+  const centerSection = simplifyPanel.querySelector('.center-section');
+  const rightSection = simplifyPanel.querySelector('.right-section');
+  if (centerSection) centerSection.style.display = 'none';
+  if (rightSection) rightSection.style.display = 'none';
+
   // 문장 순화 버튼 → 패널 토글
   const simplifyBtn = document.getElementById("simplify-btn");
   simplifyBtn?.addEventListener("click", () => {
@@ -194,6 +200,7 @@ export function renderReaderMode(dto) {
     finalList,
     serverInput,
     mapIndex,
+    simplifyPanel,
 
     onUpdateSimplified: (newTexts) => {
       simplifiedParagraphs = newTexts;
@@ -581,9 +588,87 @@ export function renderReaderMode(dto) {
       margin: 0 auto 10px;
       animation: spin 0.9s linear infinite;
     }
+    
+    /* NEW: Toast Indicator */
+    #simplify-toast-indicator {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translate(-50%, 100px);
+      background-color: #333;
+      color: white;
+      padding: 14px 22px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999999999;
+      transition: transform 0.3s ease-in-out;
+      opacity: 0;
+    }
+    #simplify-toast-indicator.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+    #simplify-toast-indicator.error {
+      background-color: #ef4444;
+    }
+    .toast-message {
+      margin: 0;
+      font-size: 15px;
+    }
+    .toast-spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    /* NEW: Toast Indicator */
+    #simplify-toast-indicator {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translate(-50%, 100px);
+      background-color: #333;
+      color: white;
+      padding: 14px 22px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999999999;
+      transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #simplify-toast-indicator.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #simplify-toast-indicator.error {
+      background-color: #ef4444;
+    }
+    .toast-message {
+      margin: 0;
+      font-size: 15px;
+    }
+    .toast-spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
   `;
   

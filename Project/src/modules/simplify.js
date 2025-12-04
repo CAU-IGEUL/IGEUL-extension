@@ -2,52 +2,59 @@
 
 import { requestSimplifyText, getSimplificationReport, apiService } from "./api.js";
 
-//구성 바뀜
 export function initSimplifyFeature({
   dto,
   finalList,
   serverInput,
   mapIndex,
+  simplifyPanel, // The panel element is now passed in
   onUpdateSimplified,
   onModeChange
 }) {
   let lastJobId = null;
   let simplificationReportData = null; // To store the pre-fetched report
   const reportButton = document.getElementById("report-view");
+  let toastTimeout;
 
   // Disable the report button initially, as no report has been generated.
   if (reportButton) {
     reportButton.disabled = true;
   }
 
-  /* -------------------------------------------------------
-     로딩창
+  /* ------------------------------------------------------- 
+     TOAST NOTIFICATION (New)
   ------------------------------------------------------- */
-  function showSimplifyLoading() {
-    let loader = document.getElementById("simplify-loading");
-    if (!loader) {
-      loader = document.createElement("div");
-      loader.id = "simplify-loading";
-      loader.innerHTML = `
-        <div class="loading-backdrop"></div>
-        <div class="loading-box">
-          <div class="loader"></div>
-          <p>문장 순화 중입니다...</p>
-        </div>
-      `;
-      document.body.appendChild(loader);
+  function showToast(message, isError = false, duration = null) {
+    let toast = document.getElementById("simplify-toast-indicator");
+    if (toastTimeout) clearTimeout(toastTimeout);
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "simplify-toast-indicator";
+      document.body.appendChild(toast);
     }
-    document.body.classList.add("loading-blur");
-    loader.style.display = "flex";
+    
+    toast.innerHTML = `
+      <div class="toast-spinner" style="${isError || duration ? 'display: none;' : ''}"></div>
+      <p class="toast-message">${message}</p>
+    `;
+
+    toast.className = 'simplify-toast show';
+    if(isError) toast.classList.add('error');
+
+    if (duration) {
+      toastTimeout = setTimeout(() => hideToast(), duration);
+    }
   }
 
-  function hideSimplifyLoading() {
-    const loader = document.getElementById("simplify-loading");
-    if (loader) loader.style.display = "none";
-    document.body.classList.remove("loading-blur");
+  function hideToast() {
+    let toast = document.getElementById("simplify-toast-indicator");
+    if (toast) {
+      toast.classList.remove("show");
+    }
   }
   
-  /* -------------------------------------------------------
+  /* ------------------------------------------------------- 
      NEW: Report Polling Function
   ------------------------------------------------------- */
   async function pollForReport(jobId, token) {
@@ -66,7 +73,6 @@ export function initSimplifyFeature({
                 }
                 return; // Success, exit polling loop
             }
-            // If still processing, wait for the next attempt
             await new Promise(resolve => setTimeout(resolve, DELAY));
         } catch (error) {
             console.error("❌ 리포트 폴링 오류:", error);
@@ -83,12 +89,12 @@ export function initSimplifyFeature({
     }
   }
 
-  /* -------------------------------------------------------
+  /* ------------------------------------------------------- 
      🪄 문장 순화 실행 (Refactored)
   ------------------------------------------------------- */
   document.getElementById("run-simplify")?.addEventListener("click", async () => {
     console.log("🪄 문장 순화 요청됨");
-    showSimplifyLoading();
+    showToast("문장 순화 중입니다...");
     
     // Reset and disable the report button for the new run
     if (reportButton) {
@@ -96,11 +102,17 @@ export function initSimplifyFeature({
       reportButton.textContent = "리포트 생성 중...";
       simplificationReportData = null;
     }
+    // Hide controls during a new run
+    const centerSection = simplifyPanel.querySelector('.center-section');
+    const rightSection = simplifyPanel.querySelector('.right-section');
+    if (centerSection) centerSection.style.display = 'none';
+    if (rightSection) rightSection.style.display = 'none';
+
 
     try {
       const idToken = await apiService.getAuthToken();
       if (!idToken) {
-        alert("로그인 정보가 없습니다. 먼저 로그인해주세요.");
+        showToast("로그인 정보가 없습니다. 먼저 로그인해주세요.", true, 3000);
         if(reportButton) reportButton.textContent = "리포트 보기"; // Reset text
         return;
       }
@@ -127,22 +139,26 @@ export function initSimplifyFeature({
       onUpdateSimplified(rebuilt);
       onModeChange("simplified");
 
+      // Show the controls
+      if (centerSection) centerSection.style.display = 'flex';
+      if (rightSection) rightSection.style.display = 'block';
+
+      showToast("문장 순화가 완료되었습니다.", false, 3000);
+
       // Start polling for the report in the background
       pollForReport(lastJobId, idToken);
 
     } catch (err) {
       console.error("❌ 문장 순화 오류:", err);
-      alert("문장 순화 중 오류가 발생했습니다.");
+      showToast("문장 순화 중 오류가 발생했습니다.", true, 3000);
       if (reportButton) {
         reportButton.disabled = true;
         reportButton.textContent = "리포트 생성 실패";
       }
-    } finally {
-      hideSimplifyLoading();
     }
   });
 
-  /* -------------------------------------------------------
+  /* ------------------------------------------------------- 
      보기 모드 라디오 버튼
   ------------------------------------------------------- */
   document.getElementById("origin-only")?.addEventListener("change", () => {
@@ -157,31 +173,29 @@ export function initSimplifyFeature({
     onModeChange("compare");
   });
 
-  /* -------------------------------------------------------
+  /* ------------------------------------------------------- 
      📊 리포트 조회 (Refactored)
   ------------------------------------------------------- */
   reportButton?.addEventListener("click", () => {
     if (simplificationReportData) {
       openReportModal(simplificationReportData);
     } else {
-      // This case is for when the button is somehow clicked while disabled
-      // or if polling failed. The button text provides feedback.
       alert("리포트가 아직 준비되지 않았거나 생성에 실패했습니다.");
     }
   });
 
-  /* -------------------------------------------------------
+  /* ------------------------------------------------------- 
      모달 UI
   ------------------------------------------------------- */
   function openReportModal(analysis) {
     const { summary = {}, quantitative_analysis = {} } = analysis;
     const { original = {}, simplified = {} } = quantitative_analysis;
 
-    // Helper to format numbers (integers or rounded floats)
+    // Helper to format numbers
     const formatNumber = (num, decimalPlaces = 0) => {
         if (typeof num !== 'number' || isNaN(num)) return '-';
-        if (decimalPlaces === 0) return Math.round(num); // For counts
-        return num.toFixed(decimalPlaces); // For scores/averages
+        if (decimalPlaces === 0) return Math.round(num);
+        return num.toFixed(decimalPlaces);
     };
 
     // Helper to format metric rows
@@ -189,28 +203,19 @@ export function initSimplifyFeature({
       if (orig == null || simp == null) {
         return `<tr><td style="padding: 12px 8px; text-align: left; color: #555;">${label}</td><td colspan="3" style="color: #999;">데이터 없음</td></tr>`;
       }
-      
       const formattedOrig = formatNumber(orig, decimalPlaces);
       const formattedSimp = formatNumber(simp, decimalPlaces);
-
       const change = simp - orig;
       const percent = orig !== 0 ? ((change / orig) * 100).toFixed(1) : 0;
-      
       let changeText = '→';
       let changeColor = '#666';
-      
       if (change !== 0) {
         const sign = change > 0 ? '+' : '';
         const isReduction = change < 0;
-
         changeColor = isReduction ? '#34a853' : '#ea4335';
-        if (label === '문장 수') { // 문장 수는 증감이 향상을 의미하지 않을 수 있음
-            changeColor = '#666';
-        }
-
+        if (label === '문장 수') changeColor = '#666';
         changeText = `${sign}${formatNumber(change, decimalPlaces)} (${sign}${percent}%)`;
       }
-
       return `
         <tr>
           <td style="padding: 12px 8px; text-align: left; color: #555; font-weight: 500;">${label}</td>
@@ -222,96 +227,67 @@ export function initSimplifyFeature({
     };
 
     const modal = document.createElement("div");
-    modal.style.position = "fixed";
-    modal.style.top = "0";
-    modal.style.left = "0";
-    modal.style.right = "0";
-    modal.style.bottom = "0";
-    modal.style.zIndex = "99999999";
-    modal.style.display = "flex";
-    modal.style.justifyContent = "center";
-    modal.style.alignItems = "center";
-    
+    modal.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999999;
+      display: flex; justify-content: center; align-items: center;
+    `;
     document.body.classList.add("loading-blur");
 
     modal.innerHTML = `
       <div style="
-        background: #f8f9fa;
-        color: #202124;
-        padding: 0;
-        border-radius: 16px;
-        width: 600px; /* Increased width */
-        max-width: 95vw; /* Increased max-width */
-        max-height: 80vh;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f8f9fa; color: #202124; padding: 0; border-radius: 16px;
+        width: 600px; max-width: 95vw; max-height: 80vh; display: flex; flex-direction: column;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">
         <div style="padding: 24px 28px; border-bottom: 1px solid #e0e0e0;">
-            <h2 style="margin: 0; font-size: 22px; color: #202124;">문장 순화 리포트</h2>
+          <h2 style="margin: 0; font-size: 22px; color: #202124;">문장 순화 리포트</h2>
         </div>
-
         <div style="overflow-y: auto; padding: 24px 28px;">
-            <div style="display: flex; justify-content: space-around; gap: 20px; margin-bottom: 28px; text-align: center;">
-                <div>
-                    <div style="font-size: 14px; color: #5f6368; margin-bottom: 8px;">가독성 향상</div>
-                    <div style="font-size: 28px; font-weight: 600; color: #34a853;">${summary.readability_improvement_percent ?? "-"}%</div>
-                </div>
-                <div>
-                    <div style="font-size: 14px; color: #5f6368; margin-bottom: 8px;">분량 감소</div>
-                    <div style="font-size: 28px; font-weight: 600; color: #34a853;">${summary.char_count_reduction_percent ?? "-"}%</div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 28px;">
-                <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #202124;">핵심 요약</h3>
-                <p style="font-size: 15px; color:#5f6368; line-height: 1.6; background: #fff; padding: 14px; border-radius: 8px; margin:0;">
-                ${summary.key_message ?? "요약 정보를 불러올 수 없습니다."}
-                </p>
-            </div>
-
+          <div style="display: flex; justify-content: space-around; gap: 20px; margin-bottom: 28px; text-align: center;">
             <div>
-                <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #202124;">상세 분석</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                    <thead style="background: #f1f3f4;">
-                        <tr>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600;">항목</th>
-                            <th style="padding: 12px 8px; text-align: center; font-weight: 600;">원본</th>
-                            <th style="padding: 12px 8px; text-align: center; font-weight: 600;">순화</th>
-                            <th style="padding: 12px 8px; text-align: center; font-weight: 600;">변화</th>
-                        </tr>
-                    </thead>
-                    <tbody style="background: #fff;">
-                        ${formatMetric('글자 수', original.charCount, simplified.charCount, 0)}
-                        ${formatMetric('단어 수', original.wordCount, simplified.wordCount, 0)}
-                        ${formatMetric('문장 수', original.sentenceCount, simplified.sentenceCount, 0)}
-                        ${formatMetric('평균 문장 길이', original.avgSentenceLength, simplified.avgSentenceLength, 2)}
-                        ${formatMetric('가독성 점수', original.readabilityScore, simplified.readabilityScore, 2)}
-                    </tbody>
-                </table>
+              <div style="font-size: 14px; color: #5f6368; margin-bottom: 8px;">가독성 향상</div>
+              <div style="font-size: 28px; font-weight: 600; color: #34a853;">${summary.readability_improvement_percent ?? "-"}%</div>
             </div>
+            <div>
+              <div style="font-size: 14px; color: #5f6368; margin-bottom: 8px;">분량 감소</div>
+              <div style="font-size: 28px; font-weight: 600; color: #34a853;">${summary.char_count_reduction_percent ?? "-"}%</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 28px;">
+            <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #202124;">핵심 요약</h3>
+            <p style="font-size: 15px; color:#5f6368; line-height: 1.6; background: #fff; padding: 14px; border-radius: 8px; margin:0;">
+              ${summary.key_message ?? "요약 정보를 불러올 수 없습니다."} 
+            </p>
+          </div>
+          <div>
+            <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #202124;">상세 분석</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <thead style="background: #f1f3f4;">
+                <tr>
+                  <th style="padding: 12px 8px; text-align: left; font-weight: 600;">항목</th>
+                  <th style="padding: 12px 8px; text-align: center; font-weight: 600;">원본</th>
+                  <th style="padding: 12px 8px; text-align: center; font-weight: 600;">순화</th>
+                  <th style="padding: 12px 8px; text-align: center; font-weight: 600;">변화</th>
+                </tr>
+              </thead>
+              <tbody style="background: #fff;">
+                  ${formatMetric('글자 수', original.charCount, simplified.charCount, 0)}
+                  ${formatMetric('단어 수', original.wordCount, simplified.wordCount, 0)}
+                  ${formatMetric('문장 수', original.sentenceCount, simplified.sentenceCount, 0)}
+                  ${formatMetric('평균 문장 길이', original.avgSentenceLength, simplified.avgSentenceLength, 2)}
+                  ${formatMetric('가독성 점수', original.readabilityScore, simplified.readabilityScore, 2)}
+              </tbody>
+            </table>
+          </div>
         </div>
-
         <div style="text-align: right; padding: 20px 28px; border-top: 1px solid #e0e0e0; background: #f1f3f4; border-radius: 0 0 16px 16px;">
-          <button id="close-report-modal" style="
-            padding: 10px 20px;
-            background: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: background-color 0.2s;
-          " onmouseover="this.style.background='#357ae8'" onmouseout="this.style.background='#4285F4'">닫기</button>
+          <button id="close-report-modal" style="padding: 10px 20px; background: #4285F4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; transition: background-color 0.2s;" onmouseover="this.style.background='#357ae8'" onmouseout="this.style.background='#4285F4'">닫기</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(modal);
 
-    // Add event listener to close modal when clicking outside its content
     modal.addEventListener("click", (event) => {
       if (event.target === modal) {
         modal.remove();
