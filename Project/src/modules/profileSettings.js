@@ -132,16 +132,16 @@ export function initProfileSettings() {
         throw new Error("ApiService가 없습니다.");
       }
 
-      // 1. 서버에서 최신 데이터 가져오기 시도
-      // api.js의 getProfile은 성공 시 자동으로 로컬 스토리지(chrome.storage.local)를 업데이트합니다.
-      await window.apiService.getProfile().catch(e => {
-          console.warn('서버 연결 실패, 로컬 데이터만 사용합니다.', e);
-      });
-
-      // 2. 로컬 스토리지에서 데이터 읽어오기 (이것이 가장 최신 상태임)
-      const localProfile = await window.apiService._getFromLocalStorage();
+      const serverResponse = await window.apiService.getProfile();
       
-      if (localProfile) {
+      if (serverResponse && serverResponse.status === 'found' && serverResponse.profile) {
+        const apiProfile = serverResponse.profile;
+        const localProfile = {
+            sentence: apiProfile.readingProfile.sentence,
+            vocabulary: apiProfile.readingProfile.vocabulary,
+            knownTopics: apiProfile.knownTopics || [],
+            getRecommendations: apiProfile.getRecommendations !== undefined ? apiProfile.getRecommendations : true
+        };
         displayProfile(localProfile);
         showProfileContent();
       } else {

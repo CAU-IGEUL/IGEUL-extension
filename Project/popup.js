@@ -19,24 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileSelection = document.getElementById('profile-selection');
   const mainButtons = document.getElementById('main-buttons');
 
-  // 프로필 저장 여부 확인 함수
-  async function checkProfileSaved() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(['userProfile'], (result) => {
-        resolve(!!result.userProfile);
-      });
-    });
-  }
-
-  // 프로필 불러오기 함수
-  async function loadProfile() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(['userProfile'], (result) => {
-        resolve(result.userProfile || null);
-      });
-    });
-  }
-
   // 모든 선택 초기화
   function clearAllSelections() {
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
@@ -70,11 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 프로필 선택 영역에 저장된 값 표시
-  async function displaySavedProfile() {
+  function displayProfile(profile) {
     clearAllSelections();
     
-    const profile = await loadProfile();
-    console.log('불러온 프로필:', profile);
+    console.log('표시할 프로필:', profile);
     
     if (profile) {
       // 1. 문장 레벨 (0, 1, 2)
@@ -125,37 +106,52 @@ document.addEventListener('DOMContentLoaded', () => {
       userInfoDiv.style.display = 'flex';
       statusMessage.textContent = '로그인되었습니다.';
 
-      userPhoto.src = user.photoURL || 'default_profile.png';
+      userPhoto.src = user.photoURL || 'assets/user.svg';
       userDisplayName.textContent = user.displayName || '사용자';
       userEmail.textContent = user.email || '';
 
-      const isProfileSaved = await checkProfileSaved();
-      
-      if (!isProfileSaved) {
-        statusMessage.textContent = '프로필 설정 화면을 확인해주세요!';
-        statusMessage.style.color = '#4285F4';
-        
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab) {
-          chrome.tabs.sendMessage(
-            tab.id, 
-            { 
-              action: 'showProfileSetup',
-              userData: user
-            },
-            (response) => {
-              if (chrome.runtime.lastError) {
-                console.log('메시지 전송 오류:', chrome.runtime.lastError);
-              } else {
-                console.log('오버레이 응답:', response);
+      try {
+        const result = await apiService.getProfile();
+        const isProfileSaved = result && result.status === 'found' && result.profile;
+
+        if (!isProfileSaved) {
+          statusMessage.textContent = '프로필 설정 화면을 확인해주세요!';
+          statusMessage.style.color = '#4285F4';
+          
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab && tab.id) { // Check if tab and tab.id exist
+            chrome.tabs.sendMessage(
+              tab.id, 
+              { 
+                action: 'showProfileSetup',
+                userData: user
+              },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  console.log('메시지 전송 오류 (무시 가능):', chrome.runtime.lastError.message);
+                } else {
+                  console.log('오버레이 응답:', response);
+                }
+                // Close popup after sending message, letting the overlay take over.
+                window.close(); 
               }
-            }
-          );
+            );
+          } else {
+             // If we can't get a tab, we can't show the overlay. Just show main buttons.
+             profileSelection.style.display = 'none';
+             mainButtons.style.display = 'block';
+          }
+        } else {
+          profileSelection.style.display = 'none';
+          mainButtons.style.display = 'block';
         }
-      } 
-      
-      profileSelection.style.display = 'none';
-      mainButtons.style.display = 'block';
+      } catch (error) {
+          console.error("프로필 확인 오류:", error);
+          statusMessage.textContent = '프로필을 확인하는 중 오류가 발생했습니다.';
+          statusMessage.style.color = '#ea4335';
+          mainButtons.style.display = 'block';
+          profileSelection.style.display = 'none';
+      }
     } else {
       loginBtn.style.display = 'block';
       logoutBtn.style.display = 'none';
@@ -169,98 +165,94 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 프로필 저장 버튼 클릭
-  // 프로필 저장 버튼 클릭 부분 수정
-saveProfileBtn.addEventListener('click', async () => {
-  try {
-    // 1. 문장 레벨 (0, 1, 2)
-    const sentenceSlider = document.querySelector('input[name="sentence-level"]');
-    const sentenceLevel = sentenceSlider ? parseInt(sentenceSlider.value) : 0;
-    
-    // 2. 어휘 수준 (0, 1, 2)
-    const vocabSlider = document.querySelector('input[name="vocab-level"]');
-    const vocabLevel = vocabSlider ? parseInt(vocabSlider.value) : 0;
-    
-    // 3. 학습 분야 (선택사항)
-    const selectedKnownTopics = Array.from(
-      document.querySelectorAll('input[name="known-topics"]:checked')
-    ).map(checkbox => checkbox.value);
+  saveProfileBtn.addEventListener('click', async () => {
+    try {
+      // 1. 문장 레벨 (0, 1, 2)
+      const sentenceSlider = document.querySelector('input[name="sentence-level"]');
+      const sentenceLevel = sentenceSlider ? parseInt(sentenceSlider.value) : 0;
+      
+      // 2. 어휘 수준 (0, 1, 2)
+      const vocabSlider = document.querySelector('input[name="vocab-level"]');
+      const vocabLevel = vocabSlider ? parseInt(vocabSlider.value) : 0;
+      
+      // 3. 학습 분야 (선택사항)
+      const selectedKnownTopics = Array.from(
+        document.querySelectorAll('input[name="known-topics"]:checked')
+      ).map(checkbox => checkbox.value);
 
-    // 프로필 객체
-    const profile = {
-      sentence: sentenceLevel,
-      vocabulary: vocabLevel,
-      knownTopics: selectedKnownTopics
-    };
-
-    // 저장 버튼 비활성화 및 로딩 표시
-    saveProfileBtn.disabled = true;
-    saveProfileBtn.textContent = '저장 중...';
-
-    // API로 프로필 저장
-    const result = await apiService.saveProfile(profile);
-    
-    console.log('프로필 저장 완료:', result);
-    
-    // 성공 메시지 표시
-    statusMessage.textContent = '프로필이 저장되었습니다!';
-    statusMessage.style.color = '#34a853';
-    
-    setProfileMode(false);
-    profileSelection.style.display = 'none';
-    mainButtons.style.display = 'block';
-    
-  } catch (error) {
-    console.error('프로필 저장 실패:', error);
-    
-    // 에러 메시지 표시
-    statusMessage.textContent = '프로필 저장에 실패했습니다. 다시 시도해주세요.';
-    statusMessage.style.color = '#ea4335';
-    
-  } finally {
-    // 버튼 복원
-    saveProfileBtn.disabled = false;
-    saveProfileBtn.textContent = '저장';
-  }
-});
-
-// 프로필 변경 버튼 클릭 부분 수정
-profileBtn.addEventListener('click', async () => {
-  console.log('프로필 변경 버튼 클릭됨');
-  
-  setProfileMode(false);
-  mainButtons.style.display = 'none';
-  profileSelection.style.display = 'block';
-  
-  // 서버에서 프로필 불러오기
-  try {
-    statusMessage.textContent = '프로필을 불러오는 중...';
-    const result = await apiService.getProfile();
-    
-    if (result && result.profile) {
-      // API에서 받은 프로필을 로컬 형식으로 변환하여 표시
-      const localProfile = {
-        sentence: result.profile.readingProfile.sentence,
-        vocabulary: result.profile.readingProfile.vocabulary,
-        knownTopics: result.profile.knownTopics
+      // 프로필 객체
+      const profile = {
+        sentence: sentenceLevel,
+        vocabulary: vocabLevel,
+        knownTopics: selectedKnownTopics
       };
+
+      // 저장 버튼 비활성화 및 로딩 표시
+      saveProfileBtn.disabled = true;
+      saveProfileBtn.textContent = '저장 중...';
+
+      // API로 프로필 저장
+      const result = await apiService.saveProfile(profile);
       
-      // 로컬 스토리지에 임시 저장
-      await new Promise(resolve => {
-        chrome.storage.local.set({ userProfile: localProfile }, resolve);
-      });
+      console.log('프로필 저장 완료:', result);
       
-      statusMessage.textContent = '';
+      // 성공 메시지 표시
+      statusMessage.textContent = '프로필이 저장되었습니다!';
+      statusMessage.style.color = '#34a853';
+      
+      setProfileMode(false);
+      profileSelection.style.display = 'none';
+      mainButtons.style.display = 'block';
+    
+    } catch (error) {
+      console.error('프로필 저장 실패:', error);
+      
+      // 에러 메시지 표시
+      statusMessage.textContent = '프로필 저장에 실패했습니다. 다시 시도해주세요.';
+      statusMessage.style.color = '#ea4335';
+      
+    } finally {
+      // 버튼 복원
+      saveProfileBtn.disabled = false;
+      saveProfileBtn.textContent = '저장';
     }
-  } catch (error) {
-    console.error('프로필 불러오기 실패:', error);
-    statusMessage.textContent = '프로필을 불러오는데 실패했습니다.';
-    statusMessage.style.color = '#ea4335';
-  }
-  
-  setTimeout(async () => {
-    await displaySavedProfile();
-  }, 50);
-});
+  });
+
+  // 프로필 변경 버튼 클릭
+  profileBtn.addEventListener('click', async () => {
+    console.log('프로필 변경 버튼 클릭됨');
+    
+    mainButtons.style.display = 'none';
+    profileSelection.style.display = 'block';
+    setProfileMode(false);
+    
+    // 서버에서 프로필 불러오기
+    try {
+      statusMessage.textContent = '프로필을 불러오는 중...';
+      const result = await apiService.getProfile();
+      
+      if (result && result.status === 'found' && result.profile) {
+        // API에서 받은 프로필을 로컬 형식으로 변환하여 표시
+        const localProfile = {
+          sentence: result.profile.readingProfile.sentence,
+          vocabulary: result.profile.readingProfile.vocabulary,
+          knownTopics: result.profile.knownTopics
+        };
+        displayProfile(localProfile);
+        statusMessage.textContent = '프로필을 수정해주세요.';
+      } else {
+        displayProfile(null);
+        statusMessage.textContent = '저장된 프로필이 없습니다. 새로 만들어주세요.';
+      }
+    } catch (error) {
+      console.error('프로필 불러오기 실패:', error);
+      statusMessage.textContent = '프로필을 불러오는데 실패했습니다.';
+      statusMessage.style.color = '#ea4335';
+      // 에러 시 메인 버튼으로 복귀
+      mainButtons.style.display = 'block';
+      profileSelection.style.display = 'none';
+    }
+  });
 
   // 슬라이더 이벤트 리스너 추가
   document.querySelectorAll('.level-slider').forEach(slider => {

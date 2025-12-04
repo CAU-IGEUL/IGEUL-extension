@@ -20,7 +20,8 @@ module.exports = {
         { from: 'manifest.json', to: 'manifest.json' },
         { from: 'fonts', to: 'fonts' },
         { from: 'popup.html', to: 'popup.html' },
-        { from: 'popup.css', to: 'popup.css' }
+        { from: 'popup.css', to: 'popup.css' },
+        { from: 'profileOverlay.js', to: 'profileOverlay.js' }
       ]
     })
   ]

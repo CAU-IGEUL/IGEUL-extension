@@ -107,15 +107,6 @@ async function handleSaveProfile(profileData, sendResponse) {
     const result = await response.json();
     console.log('[(6) 성공] 서버 응답:', result);
     
-    // 5. 로컬 스토리지 저장
-    const profileToSave = (result.profile) ? {
-        sentence: result.profile.readingProfile.sentence,
-        vocabulary: result.profile.readingProfile.vocabulary,
-        knownTopics: result.profile.knownTopics
-    } : profileData;
-
-    await chrome.storage.local.set({ userProfile: profileToSave });
-    
     sendResponse({ status: 'success', data: result });
     
   } catch (error) {
@@ -141,7 +132,6 @@ function handleGoogleLogin() {
         console.log('Login Successful (via credential):', user.displayName, user.email);
 
         user.getIdToken().then((idToken) => {
-          chrome.storage.local.set({ idToken });
 
           fetch(`${API_BASE_URL}/getUserProfile`, {
             headers: { 'Authorization': 'Bearer ' + idToken }
@@ -161,6 +151,18 @@ function handleGoogleLogin() {
       })
       .catch((error) => {
         console.error('Firebase signInWithCredential error:', error);
+        // This error can occur if the user revokes permissions from their Google account.
+        // The token cached by Chrome becomes invalid. We can try to remove it.
+        if (error.code === 'auth/internal-error' && error.message.includes('Unsuccessful check authorization response')) {
+            console.log('Removing potentially invalid cached auth token due to auth error.');
+            chrome.identity.removeCachedAuthToken({ token: token }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error("Could not remove cached token:", chrome.runtime.lastError.message);
+                } else {
+                    console.log("Cached token removed. Please ask the user to try logging in again.");
+                }
+            });
+        }
       });
   });
 }

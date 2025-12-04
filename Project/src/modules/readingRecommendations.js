@@ -139,8 +139,14 @@ async function loadRecommendations() {
 
   try {
     // Get user profile to check the setting
-    const profile = await apiService._getFromLocalStorage();
-    const shouldFetch = profile?.getRecommendations !== false;
+    const serverResponse = await apiService.getProfile();
+    let shouldFetch = true; // Default to true
+    if (serverResponse && serverResponse.status === 'found' && serverResponse.profile) {
+        shouldFetch = serverResponse.profile.getRecommendations !== false;
+    } else {
+        // if no profile, or not found, default to true.
+        shouldFetch = true;
+    }
 
     // Sync toggle state with profile setting
     if (toggle) {

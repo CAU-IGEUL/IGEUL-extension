@@ -151,7 +151,7 @@ function showProfileSetupOverlay(userData) {
     </div>
   `;
 
-  // 스타일 추가 (기존과 동일)
+  // 스타일 추가
   const style = document.createElement('style');
   style.id = 'cau-igeul-overlay-style';
   style.textContent = `
@@ -159,14 +159,15 @@ function showProfileSetupOverlay(userData) {
     .cau-igeul-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
     .cau-igeul-overlay-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 90vh; overflow-y: auto; z-index: 1000000; }
     .cau-igeul-setup-container { background-color: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 600px; width: 90vw; text-align: center; }
-    .cau-igeul-user-info { display: flex; align-items: center; justify-content: center; margin-bottom: 30px; padding: 16px; background-color: #e8f0fe; border-radius: 12px; }
-    .cau-igeul-user-photo { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; border: 3px solid #4285F4; }
+    .cau-igeul-setup-container h1 { margin-bottom: 25px; }
+    .cau-igeul-user-info { display: flex; align-items: center; justify-content: center; margin-bottom: 30px; padding: 16px; background-color: #FFF4E8; border-radius: 12px; }
+    .cau-igeul-user-photo { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; border: 3px solid #FF8D21; }
     .cau-igeul-user-details { display: flex; flex-direction: column; text-align: left; }
     .cau-igeul-user-name { font-weight: bold; color: #333; font-size: 16px; }
     .cau-igeul-user-email { font-size: 13px; color: #666; }
     .cau-igeul-progress-indicator { display: flex; align-items: center; justify-content: center; margin: 20px 0 40px 0; gap: 10px; }
     .cau-igeul-progress-step { width: 40px; height: 40px; border-radius: 50%; background-color: #e0e0e0; color: #666; display: flex; align-items: center; justify-content: center; font-weight: 600; transition: all 0.3s; }
-    .cau-igeul-progress-step.active { background-color: #4285F4; color: white; transform: scale(1.15); }
+    .cau-igeul-progress-step.active { background-color: #FF8D21; color: white; transform: scale(1.15); }
     .cau-igeul-progress-step.completed { background-color: #34a853; color: white; }
     .cau-igeul-progress-line { width: 40px; height: 3px; background-color: #e0e0e0; transition: all 0.3s; }
     .cau-igeul-progress-line.completed { background-color: #34a853; }
@@ -181,31 +182,64 @@ function showProfileSetupOverlay(userData) {
     .cau-igeul-sentence-level-btn input[type="radio"] { display: none; }
     .cau-igeul-sentence-level-btn .cau-igeul-level-content { display: flex; flex-direction: column; width: 100%; gap: 12px; }
     .cau-igeul-level-header { display: flex; align-items: center; gap: 10px; }
-    .cau-igeul-level-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; background-color: #e3f2fd; color: #1976d2; font-weight: 500; }
+    .cau-igeul-level-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; background-color: #FFE0B2; color: #D97904; font-weight: 500; }
     .cau-igeul-original-badge { background-color: #fff3e0; color: #f57c00; }
-    .cau-igeul-sentence-level-btn:hover { background-color: #e3f2fd; transform: translateY(-2px); }
-    .cau-igeul-sentence-level-btn:has(input[type="radio"]:checked) { background-color: #e8f0fe; border-color: #4285F4; }
+    .cau-igeul-sentence-level-btn:hover { background-color: #FFF4E8; transform: translateY(-2px); }
+    .cau-igeul-sentence-level-btn:has(input[type="radio"]:checked) { background-color: #FFF4E8; border-color: #FF8D21; }
     .cau-igeul-tag-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
     .cau-igeul-tag-label { display: flex; align-items: center; padding: 12px 18px; background-color: #f0f0f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 15px; }
     .cau-igeul-tag-label input[type="checkbox"] { display: none; }
     .cau-igeul-tag-label:hover { background-color: #e0e0e0; transform: translateY(-2px); }
-    .cau-igeul-tag-label:has(input[type="checkbox"]:checked) { background-color: #4285F4; color: white; }
+    .cau-igeul-tag-label:has(input[type="checkbox"]:checked) { background-color: #FF8D21; color: white; }
     .cau-igeul-step-navigation { display: flex; gap: 12px; margin-top: 30px; }
     .cau-igeul-btn { padding: 16px 32px; border: none; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; }
     .cau-igeul-nav-btn { background-color: #e0e0e0; color: #333; }
     .cau-igeul-nav-btn:hover { background-color: #d5d5d5; }
-    .cau-igeul-save-btn { background-color: #4285F4; color: white; }
-    .cau-igeul-save-btn:hover { background-color: #357ae8; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4); }
+    .cau-igeul-nav-btn.activated { background-color: #FF8D21; color: white; }
+    .cau-igeul-save-btn { background-color: #FF8D21; color: white; }
+    .cau-igeul-save-btn:hover { background-color: #E67E1E; box-shadow: 0 4px 12px rgba(255, 141, 33, 0.4); }
   `;
 
   document.head.appendChild(style);
   document.body.appendChild(overlay);
   console.log('👉 [오버레이] DOM 추가 완료');
 
+  // Handle click on custom radio button labels
+  document.querySelectorAll('#cau-igeul-profile-overlay .cau-igeul-sentence-level-btn').forEach(label => {
+    label.addEventListener('click', () => {
+      const radio = label.querySelector('input[type="radio"]');
+      if (radio) {
+        radio.checked = true;
+        // Manually trigger change event for the button state updater
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+  });
+
   // 버튼 요소 찾기 (DOM 추가 후에 실행해야 함 - 에러 방지 핵심)
   const nextBtn = document.getElementById('cau-igeul-next-step');
   const prevBtn = document.getElementById('cau-igeul-prev-step');
   const saveBtn = document.getElementById('cau-igeul-save-profile');
+
+  // 유효성 검사 (알림 없음)
+  function isStepValid(step) {
+    if (step === 1) {
+      return !!document.querySelector('input[name="sentence-level"]:checked');
+    }
+    if (step === 2) {
+      return !!document.querySelector('input[name="vocab-level"]:checked');
+    }
+    return true; // Step 3 is always valid
+  }
+
+  // 다음 버튼 상태 업데이트
+  function updateNextButtonState() {
+    if (isStepValid(currentStep)) {
+      nextBtn.classList.add('activated');
+    } else {
+      nextBtn.classList.remove('activated');
+    }
+  }
 
   // 단계 전환 함수
   function showStep(step) {
@@ -241,20 +275,18 @@ function showProfileSetupOverlay(userData) {
       saveBtn.style.display = 'block';
     }
     currentStep = step;
+    updateNextButtonState(); // Update button state when step changes
   }
 
-  // 유효성 검사
+  // 유효성 검사 (알림 있음)
   function validateCurrentStep() {
-    if (currentStep === 1) {
-      if (!document.querySelector('input[name="sentence-level"]:checked')) {
-        alert('문장 수준을 선택해주세요.');
-        return false;
-      }
-    } else if (currentStep === 2) {
-      if (!document.querySelector('input[name="vocab-level"]:checked')) {
-        alert('어휘 수준을 선택해주세요.');
-        return false;
-      }
+    if (currentStep === 1 && !isStepValid(1)) {
+      alert('문장 수준을 선택해주세요.');
+      return false;
+    }
+    if (currentStep === 2 && !isStepValid(2)) {
+      alert('어휘 수준을 선택해주세요.');
+      return false;
     }
     return true;
   }
@@ -266,6 +298,13 @@ function showProfileSetupOverlay(userData) {
 
   prevBtn.addEventListener('click', () => {
     if (currentStep > 1) showStep(currentStep - 1);
+  });
+  
+  // 라디오/체크박스 변경 시 다음 버튼 상태 업데이트
+  overlay.addEventListener('change', (e) => {
+    if (e.target.name === 'sentence-level' || e.target.name === 'vocab-level') {
+      updateNextButtonState();
+    }
   });
 
   // [핵심] 저장 버튼 이벤트 리스너 (수정된 로직 적용)

@@ -38,7 +38,7 @@ function toggleToolbar() {
     });
 
     document.getElementById("reader-btn").addEventListener("click", () => {
-        const dtoRaw = localStorage.getItem("CAU_READER_DTO");
+        const dtoRaw = null;
         if (!dtoRaw) {
         alert("본문을 먼저 추출하세요!");
         return;
