@@ -17,8 +17,18 @@ export function initSummary() {
       modal.style.display = 'flex';
       summaryToggle?.classList.add('active');
       
-      // API 호출 시작
-      fetchSummary();
+      const summaryText = document.querySelector('.summary-text');
+
+      // 캐시 확인: data-summary-loaded 속성으로 확인
+      if (summaryText && summaryText.dataset.summaryLoaded === 'true') {
+        console.log("⚡️ 캐시된 요약 내용을 표시합니다.");
+        // 이미 내용이 있으므로 API를 호출하지 않고, 현재 내용(성공한 결과)을 다시 보여줌
+        showSummaryContent(summaryText.textContent);
+      } else {
+        // 내용이 없으면 API 호출 시작
+        console.log("☁️ 새로운 요약 내용을 가져옵니다.");
+        fetchSummary();
+      }
     }
   }
 
@@ -49,6 +59,8 @@ export function initSummary() {
     const summaryText = document.querySelector('.summary-text');
     if (summaryText) {
       summaryText.textContent = text;
+      // 요약 로드 성공 상태 저장
+      summaryText.dataset.summaryLoaded = 'true';
     }
   }
 
@@ -115,6 +127,12 @@ export function initSummary() {
      API 호출 함수
   =================================== */
   async function fetchSummary() {
+    // 캐시 상태 초기화 ('다시 시도'를 위함)
+    const summaryText = document.querySelector('.summary-text');
+    if (summaryText) {
+      delete summaryText.dataset.summaryLoaded;
+    }
+
     try {
       showLoading();
       
